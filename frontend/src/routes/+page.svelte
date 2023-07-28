@@ -1,11 +1,41 @@
 <script>
 	import ButtonRow from '$lib/ButtonRow.svelte';
+    import ArticlesListView from '$lib/ArticlesListView.svelte';
+
+    const ContentArea = {
+        Articles: "articles",
+        Projects: "projects",
+        About: "about"
+    } 
+
+    let currentContent = ContentArea.Articles; 
+    function showArticles(){
+        currentContent = ContentArea.Articles;
+    }     
+    function showProjects(){
+        currentContent = ContentArea.Projects;
+    }
+    function showAbout(){
+        currentContent = ContentArea.About;
+    }
 </script>
 
-<div class="flex h-24 justify-center items-center bg-gray-800">
-    <p class="text-5xl text-gray-400">Markdown blog</p>
-</div>
-
-<div class="flex h-fit justify-center bg-gray-600">
-    <ButtonRow buttons={['Blog', 'Projects', 'About']} />
+<div class="flex h-screen flex-col">
+    <div class="flex justify-center items-center bg-gray-800">
+        <p class="h-24 text-5xl text-gray-400">Markdown blog</p>
+    </div>
+    
+    <div class="flex h-fit justify-center bg-gray-600">
+        <ButtonRow buttonNames={['Articles', 'Projects', 'About']} buttonCallbacks={[showArticles, showProjects, showAbout]} />
+    </div>
+    
+    <div class="flex-1 bg-gray-600">
+        {#if currentContent === ContentArea.Articles}
+            <ArticlesListView/>
+        {:else if currentContent === ContentArea.Projects}
+            <p>B</p>
+        {:else}
+            <p>C</p>
+        {/if}
+    </div>
 </div>
