@@ -1,6 +1,8 @@
 <script>
 	import ButtonRow from '$lib/ButtonRow.svelte';
     import ArticlesListView from '$lib/ArticlesListView.svelte';
+    import About from '$lib/About.svelte';
+	import ProjectsOverview from '$lib/ProjectsOverview.svelte';
 
     const ContentArea = {
         Articles: "articles",
@@ -33,9 +35,9 @@
         {#if currentContent === ContentArea.Articles}
             <ArticlesListView/>
         {:else if currentContent === ContentArea.Projects}
-            <p>B</p>
+            <ProjectsOverview/>
         {:else}
-            <p>C</p>
+            <About/>
         {/if}
     </div>
 </div>

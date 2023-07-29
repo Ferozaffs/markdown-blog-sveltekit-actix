@@ -1,7 +1,6 @@
 <script>
     export let title = 'Title';
     export let date = '1970-01-01';
-    export let description = 'This is some template description'
     export let image = '/images/testImage.jpg';
     export let imageAlt ='ImageDescription';
 
@@ -11,6 +10,4 @@
     <img src={image} alt={imageAlt} class="w-fit"/>
     <p class="text-xl">{title}</p>
     <p class="text-xs">{date}</p>
-    <br>
-    <p class="text-xs">{description}</p>
 </div>
