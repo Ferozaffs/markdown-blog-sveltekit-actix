@@ -35,7 +35,7 @@
         {#if currentContent === ContentArea.Articles}
             <ArticlesListView/>
         {:else if currentContent === ContentArea.Projects}
-            <ProjectsOverview/>
+            <ProjectsOverview data-sveltekit-preload-data="hover"/>
         {:else}
             <About/>
         {/if}
