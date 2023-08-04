@@ -1,5 +1,6 @@
 use actix_web::{get, web, Responder, Result};
 use serde::Serialize;
+use crate::database::Database;
 
 #[derive(Serialize)]
 struct Project {
@@ -44,8 +45,16 @@ pub fn create_test_overview() -> ProjectOverview {
 }
 
 #[get("/projectoverview")]
-async fn project_overview() -> Result<impl Responder> {
+async fn project_overview(db: web::Data<Database>) -> Result<impl Responder> {
+    let result = db.get_projects().await;
+    for row in result.unwrap() {
+        let name: &str = row.get(1);
+        
+        println!("found project: {}", name);
+    };
+
     Ok(web::Json(create_test_overview()))
 }
+ 
 
 
