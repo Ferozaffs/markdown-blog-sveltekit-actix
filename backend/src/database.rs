@@ -23,12 +23,38 @@ impl Database {
         Database { pool }
     }
 
+    pub async fn get_project_categories(&self) -> Result<Vec<Row>, Error> {
+        let connection = self.pool.get()
+        .await
+        .expect("Failed to get a connection from the pool");
+
+        connection.query("SELECT project_categories.category, project_categories.description FROM project_categories",&[])
+        .await
+    }
+
     pub async fn get_projects(&self) -> Result<Vec<Row>, Error> {
         let connection = self.pool.get()
         .await
         .expect("Failed to get a connection from the pool");
 
-        connection.query("SELECT id, name FROM projects", &[])
+        connection.query("SELECT projects.name, projects.image, projects.status FROM projects",&[])
+        .await
+    }
+
+    pub async fn get_projects_from_category(&self, category: &str) -> Result<Vec<Row>, Error> {
+        let connection = self.pool.get()
+        .await
+        .expect("Failed to get a connection from the pool");
+
+        let query = format!("SELECT projects.name, projects.image, projects.status
+            FROM projects
+            WHERE projects.category_id=(
+                SELECT project_categories.id 
+                FROM project_categories
+                WHERE project_categories.category='{}')",
+        category);
+
+        connection.query(&query.to_string() ,&[])
         .await
     }
 }
