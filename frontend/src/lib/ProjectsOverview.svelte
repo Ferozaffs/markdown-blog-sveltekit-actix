@@ -10,6 +10,7 @@
 		} 	
     }
     const promise = getProjectOverview();
+    
 </script>
 
 {#await promise}
@@ -29,7 +30,11 @@
                             <div class="hover:bg-gray-900 dark:hover:bg-gray-700 rounded-lg">
                                 <img src="/images/testImage.jpg" alt="" class="display: inline border-2 border-gray-800 dark:border-gray-800 w-12 h-12 rounded-lg overflow-hidden"/>
                                 <span class="px-1">{child.name}</span>
-                                <span>[{child.status}]</span>
+                                {#if child.status === 0}
+                                    <span class="text-gray-500">[ONGOING]</span>
+                                {:else if child.status === 1}
+                                    <span class="text-green-600">[COMPLETED]</span>
+                                {/if}
                             </div>
                         </li>
                     {/each}
