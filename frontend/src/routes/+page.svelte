@@ -3,6 +3,7 @@
     import ArticlesListView from '$lib/ArticlesListView.svelte';
     import About from '$lib/About.svelte';
 	import ProjectsOverview from '$lib/ProjectsOverview.svelte';
+	import { currentContent } from '$lib/store.js';
 
     const ContentArea = {
         Articles: "articles",
@@ -10,15 +11,14 @@
         About: "about"
     } 
 
-    let currentContent = ContentArea.Articles; 
     function showArticles(){
-        currentContent = ContentArea.Articles;
+        $currentContent = ContentArea.Articles;
     }     
     function showProjects(){
-        currentContent = ContentArea.Projects;
+        $currentContent = ContentArea.Projects;
     }
     function showAbout(){
-        currentContent = ContentArea.About;
+        $currentContent = ContentArea.About;
     }
 </script>
 
@@ -32,9 +32,9 @@
     </div>
     
     <div class="flex-1 bg-gray-600">
-        {#if currentContent === ContentArea.Articles}
+        {#if $currentContent === ContentArea.Articles}
             <ArticlesListView/>
-        {:else if currentContent === ContentArea.Projects}
+        {:else if $currentContent === ContentArea.Projects}
             <ProjectsOverview/>
         {:else}
             <About/>

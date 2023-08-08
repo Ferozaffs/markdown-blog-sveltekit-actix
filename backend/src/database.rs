@@ -57,4 +57,20 @@ impl Database {
         connection.query(&query.to_string() ,&[])
         .await
     }
+
+    pub async fn get_project_content(&self, id: &str) -> Result<Vec<Row>, Error> {
+        let connection = self.pool.get()
+        .await
+        .expect("Failed to get a connection from the pool");
+
+        let query = format!("SELECT projects.content 
+            FROM projects 
+            WHERE projects.name='{}'",
+        id);
+
+        println!("{}", query);
+
+        connection.query(&query.to_string(),&[])
+        .await
+    }
 }

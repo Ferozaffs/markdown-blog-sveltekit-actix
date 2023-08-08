@@ -1,5 +1,6 @@
-<script>
+<script lang="ts">
     import { BarLoader } from 'svelte-loading-spinners';
+    import { goto } from '$app/navigation';
 
     async function getProjectOverview() {
         const response = await self.fetch("http://localhost:8080/projectoverview")
@@ -10,6 +11,10 @@
 		} 	
     }
     const promise = getProjectOverview();
+
+    function gotoProject(projectId: string) {
+        goto("/projects/".concat(projectId))
+    }
     
 </script>
 
@@ -22,20 +27,20 @@
         {#each po.categories as category}
             <div class="font-medium text-gray-400">
                 <p class="text-2xl">{category.title}</p>
-                <p class="text-xs px-1">{category.description}</p>
+                <p class="text-xs">{category.description}</p>
                 <br>
                 <ul>
                     {#each category.children as child}
                         <li>
-                            <div class="hover:bg-gray-900 dark:hover:bg-gray-700 rounded-lg">
-                                <img src="/images/testImage.jpg" alt="" class="display: inline border-2 border-gray-800 dark:border-gray-800 w-12 h-12 rounded-lg overflow-hidden"/>
+                            <button on:click={() => gotoProject(child.name)} class="hover:bg-gray-900 dark:hover:bg-gray-700 rounded-lg w-full text-left">
+                            <img src={"http://127.0.0.1:8080/images/".concat(child.image)} alt="" class="display: inline border-2 border-gray-800 dark:border-gray-800 w-12 h-12 rounded-lg overflow-hidden"/>
                                 <span class="px-1">{child.name}</span>
                                 {#if child.status === 0}
                                     <span class="text-gray-500">[ONGOING]</span>
                                 {:else if child.status === 1}
                                     <span class="text-green-600">[COMPLETED]</span>
                                 {/if}
-                            </div>
+                            </button>
                         </li>
                     {/each}
                 </ul>

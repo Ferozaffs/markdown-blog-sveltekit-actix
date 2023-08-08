@@ -1,10 +1,12 @@
-use actix_web::{get, web, Responder, Result};
+use actix_web::{get, web, Responder, Result, HttpRequest, HttpResponse};
+use actix_web::http::header::ContentType;
 use serde::Serialize;
 use crate::database::Database;
 
 #[derive(Serialize, Debug)]
 struct ProjectSummary {
     name: String,
+    image: String,
     status: i32,
 }
 
@@ -23,6 +25,7 @@ pub struct ProjectOverview {
 pub fn create_test_overview() -> ProjectOverview {
     let ps = ProjectSummary{
         name: String::from("TestName"),
+        image: String::from("TestImage.jpg"),
         status: 0
     };
 
@@ -58,6 +61,7 @@ async fn project_overview(db: web::Data<Database>) -> Result<impl Responder> {
         for row in result.unwrap() {
             let project = ProjectSummary {
                 name: row.get(0),
+                image: row.get(1),
                 status: row.get(2)
             };
 
@@ -68,6 +72,18 @@ async fn project_overview(db: web::Data<Database>) -> Result<impl Responder> {
     }
 
     Ok(web::Json(overview))
+}
+
+#[get("/projectcontent/{id}")]
+async fn project_content(db: web::Data<Database>, req: HttpRequest) -> Result<impl Responder> {
+    let id: String = req.match_info().query("id").parse().unwrap();
+    let result = db.get_project_content(&id).await;
+    let content: String = result.unwrap().get(0).unwrap().get(0);
+
+    Ok(HttpResponse::Ok()
+        .content_type(ContentType::plaintext())
+        .insert_header(("X-Hdr", "sample"))
+        .body(content))
 }
  
 
