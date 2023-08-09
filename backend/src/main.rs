@@ -1,15 +1,11 @@
 pub mod database;
 pub mod projects;
 pub mod media;
+pub mod posts;
 
 use std::fs;
 use actix_cors::Cors;
-use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
-
-#[get("/hello")]
-async fn hello() -> impl Responder {
-    return HttpResponse::Ok().body("Hello world!");
-}
+use actix_web::{web, App, HttpServer};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -26,10 +22,11 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(app_data.clone())
             .wrap(cors)
-            .service(hello)
             .service(projects::project_overview)
             .service(projects::project_content)
+            .service(projects::project_summary)
             .service(media::get_image)
+            .service(posts::posts)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

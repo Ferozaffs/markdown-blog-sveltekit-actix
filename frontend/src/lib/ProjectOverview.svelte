@@ -3,7 +3,7 @@
     import { goto } from '$app/navigation';
 
     async function getProjectOverview() {
-        const response = await self.fetch("http://localhost:8080/projectoverview")
+        const response = await self.fetch("http://127.0.0.1:8080/projectoverview")
         if (response.ok) {
   		    let data = response.json();	
             console.log(data);
@@ -33,13 +33,21 @@
                     {#each category.children as child}
                         <li>
                             <button on:click={() => gotoProject(child.name)} class="hover:bg-gray-900 dark:hover:bg-gray-700 rounded-lg w-full text-left">
-                            <img src={"http://127.0.0.1:8080/images/".concat(child.image)} alt="" class="display: inline border-2 border-gray-800 dark:border-gray-800 w-12 h-12 rounded-lg overflow-hidden"/>
-                                <span class="px-1">{child.name}</span>
-                                {#if child.status === 0}
-                                    <span class="text-gray-500">[ONGOING]</span>
-                                {:else if child.status === 1}
-                                    <span class="text-green-600">[COMPLETED]</span>
-                                {/if}
+                                <table>
+                                    <tr>
+                                        <td>
+                                            <img src={"http://127.0.0.1:8080/images/".concat(child.image)} alt="" class="display: inline border-2 border-gray-800 dark:border-gray-800 w-12 h-12 rounded-lg overflow-hidden"/>
+                                        </td>
+                                        <td>
+                                            <p class="px-1">{child.name}</p>
+                                            {#if child.status === 0}
+                                                <p class="px-1 text-gray-500 text-sm">[ONGOING]</p>
+                                            {:else if child.status === 1}
+                                                <p class="px-1 text-green-600 text-sm">[COMPLETED]</p>
+                                            {/if}
+                                        </td>
+                                    </tr>
+                                </table>
                             </button>
                         </li>
                     {/each}

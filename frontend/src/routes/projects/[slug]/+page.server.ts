@@ -8,7 +8,7 @@ export const load: Load = async ({ params }) => {
         if (response.ok) {
             let data = await response.text();	  
             const compiledResponse = await compile(data);
-            return { content: compiledResponse?.code };
+            return {title: "asdf", status: 0, content: compiledResponse?.code };
         }
     }
 

@@ -32,15 +32,6 @@ impl Database {
         .await
     }
 
-    pub async fn get_projects(&self) -> Result<Vec<Row>, Error> {
-        let connection = self.pool.get()
-        .await
-        .expect("Failed to get a connection from the pool");
-
-        connection.query("SELECT projects.name, projects.image, projects.status FROM projects",&[])
-        .await
-    }
-
     pub async fn get_projects_from_category(&self, category: &str) -> Result<Vec<Row>, Error> {
         let connection = self.pool.get()
         .await
@@ -58,6 +49,20 @@ impl Database {
         .await
     }
 
+    pub async fn get_project_summary(&self, id: &str) -> Result<Vec<Row>, Error> {
+        let connection = self.pool.get()
+        .await
+        .expect("Failed to get a connection from the pool");
+
+        let query = format!("SELECT projects.name, projects.image, projects.status
+            FROM projects
+            WHERE projects.name='{}'",
+        id);
+
+        connection.query(&query.to_string(), &[])
+        .await
+    }
+
     pub async fn get_project_content(&self, id: &str) -> Result<Vec<Row>, Error> {
         let connection = self.pool.get()
         .await
@@ -68,8 +73,32 @@ impl Database {
             WHERE projects.name='{}'",
         id);
 
-        println!("{}", query);
+        connection.query(&query.to_string(),&[])
+        .await
+    }
 
+    pub async fn get_posts(&self, tags: Vec<&str>) -> Result<Vec<Row>, Error> {
+        let connection = self.pool.get()
+        .await
+        .expect("Failed to get a connection from the pool");
+
+        let mut query = format!("SELECT blogs.name, blogs.image, blogs.tags 
+            FROM blogs");
+
+        if tags.is_empty() == false {
+            query = format!("{} WHERE", query);
+
+            for (i, tag) in tags.iter().enumerate() {
+                if i == 0 {
+                    query = format!("{} blogs.tags LIKE {}", query, tag);
+                }
+                else {
+                    query = format!("{} OR blogs.tags LIKE {}", query, tag);
+                }
+            }
+    
+        }
+        
         connection.query(&query.to_string(),&[])
         .await
     }

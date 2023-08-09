@@ -85,6 +85,21 @@ async fn project_content(db: web::Data<Database>, req: HttpRequest) -> Result<im
         .insert_header(("X-Hdr", "sample"))
         .body(content))
 }
+
+#[get("/projectsummary/{id}")]
+async fn project_summary(db: web::Data<Database>, req: HttpRequest) -> Result<impl Responder> {
+    let id: String = req.match_info().query("id").parse().unwrap();
+    let result = db.get_project_summary(&id).await;
+    let row = result.unwrap();
+    let data = row.get(0).unwrap();
+    let summary = ProjectSummary {
+        name: data.get(0),
+        image: data.get(1),
+        status: data.get(2)
+    };
+
+    Ok(web::Json(summary))
+}
  
 
 

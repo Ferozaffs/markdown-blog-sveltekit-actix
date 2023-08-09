@@ -2,7 +2,7 @@
 	import ButtonRow from '$lib/ButtonRow.svelte';
     import ArticlesListView from '$lib/ArticlesListView.svelte';
     import About from '$lib/About.svelte';
-	import ProjectsOverview from '$lib/ProjectsOverview.svelte';
+	import ProjectOverview from '$lib/ProjectOverview.svelte';
 	import { currentContent } from '$lib/store.js';
 
     const ContentArea = {
@@ -35,7 +35,7 @@
         {#if $currentContent === ContentArea.Articles}
             <ArticlesListView/>
         {:else if $currentContent === ContentArea.Projects}
-            <ProjectsOverview/>
+            <ProjectOverview/>
         {:else}
             <About/>
         {/if}

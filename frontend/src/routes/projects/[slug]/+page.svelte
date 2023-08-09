@@ -1,7 +1,5 @@
-<script lang="ts">
-  export let data = {
-      content: ''
-  }
+<script>
+  export let data;
 </script>
 
 <div>{@html data.content}</div>
