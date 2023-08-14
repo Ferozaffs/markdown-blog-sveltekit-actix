@@ -1,10 +1,12 @@
 use actix_web::{get, web, Responder, Result, HttpRequest, HttpResponse};
 use actix_web::http::header::ContentType;
 use serde::Serialize;
+use uuid::Uuid;
 use crate::database::Database;
 
 #[derive(Serialize, Debug)]
 struct ProjectSummary {
+    id: Uuid,
     name: String,
     image: String,
     status: i32,
@@ -24,6 +26,7 @@ pub struct ProjectOverview {
 
 pub fn create_test_overview() -> ProjectOverview {
     let ps = ProjectSummary{
+        id: Uuid::parse_str("1e33f43d-0193-460a-9128-bffb1d12e57c").unwrap(),
         name: String::from("TestName"),
         image: String::from("TestImage.jpg"),
         status: 0
@@ -60,9 +63,10 @@ async fn project_overview(db: web::Data<Database>) -> Result<impl Responder> {
         let result = db.get_projects_from_category(&category.title).await;
         for row in result.unwrap() {
             let project = ProjectSummary {
-                name: row.get(0),
-                image: row.get(1),
-                status: row.get(2)
+                id: row.get(0),
+                name: row.get(1),
+                image: row.get(2),
+                status: row.get(3)
             };
 
             category.children.push(project);
@@ -93,9 +97,10 @@ async fn project_summary(db: web::Data<Database>, req: HttpRequest) -> Result<im
     let row = result.unwrap();
     let data = row.get(0).unwrap();
     let summary = ProjectSummary {
-        name: data.get(0),
-        image: data.get(1),
-        status: data.get(2)
+        id: data.get(0),
+        name: data.get(1),
+        image: data.get(2),
+        status: data.get(3)
     };
 
     Ok(web::Json(summary))

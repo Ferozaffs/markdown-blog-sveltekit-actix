@@ -32,7 +32,7 @@
                 <ul>
                     {#each category.children as child}
                         <li>
-                            <button on:click={() => gotoProject(child.name)} class="hover:bg-gray-900 dark:hover:bg-gray-700 rounded-lg w-full text-left">
+                            <button on:click={() => gotoProject(child.id)} class="hover:bg-gray-900 dark:hover:bg-gray-700 rounded-lg w-full text-left">
                                 <table>
                                     <tr>
                                         <td>

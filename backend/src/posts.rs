@@ -1,11 +1,17 @@
 use actix_web::{get, web, Responder, Result, HttpRequest};
 use serde::Serialize;
+use uuid::Uuid;
 use crate::database::Database;
 
 #[derive(Serialize, Debug)]
 struct PostSummary {
+    id: Uuid,
     title: String,
     image: String,
+    date: String,
+    description: String,
+    tags: String,
+    project_id: Uuid
 }
 
 #[get("/posts/{tags}")]
@@ -22,8 +28,13 @@ async fn posts(db: web::Data<Database>, req: HttpRequest) -> Result<impl Respond
     let mut posts = Vec::new();
     for row in result.unwrap() {
         let post = PostSummary {
-            title: row.get(0),
-            image: row.get(1),
+            id: row.get(0),
+            title: row.get(1),
+            image: row.get(2),
+            date: row.get(3),
+            description: row.get(4),
+            tags: row.get(5),
+            project_id: row.get(6),
         };
 
         posts.push(post);

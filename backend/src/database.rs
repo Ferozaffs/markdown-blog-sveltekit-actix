@@ -37,7 +37,7 @@ impl Database {
         .await
         .expect("Failed to get a connection from the pool");
 
-        let query = format!("SELECT projects.name, projects.image, projects.status
+        let query = format!("SELECT projects.id, projects.name, projects.image, projects.status
             FROM projects
             WHERE projects.category_id=(
                 SELECT project_categories.id 
@@ -54,9 +54,9 @@ impl Database {
         .await
         .expect("Failed to get a connection from the pool");
 
-        let query = format!("SELECT projects.name, projects.image, projects.status
+        let query = format!("SELECT projects.id, projects.name, projects.image, projects.status
             FROM projects
-            WHERE projects.name='{}'",
+            WHERE projects.id='{}'",
         id);
 
         connection.query(&query.to_string(), &[])
@@ -70,7 +70,7 @@ impl Database {
 
         let query = format!("SELECT projects.content 
             FROM projects 
-            WHERE projects.name='{}'",
+            WHERE projects.id='{}'",
         id);
 
         connection.query(&query.to_string(),&[])
@@ -82,7 +82,14 @@ impl Database {
         .await
         .expect("Failed to get a connection from the pool");
 
-        let mut query = format!("SELECT posts.name, posts.image, posts.tags 
+        let mut query = format!("SELECT 
+            posts.id, 
+            posts.name, 
+            posts.image, 
+            TO_CHAR(posts.date, 'yyyy-mm-dd'), 
+            posts.description,
+            posts.tags,
+            posts.project_id
             FROM posts");
 
         if tags.is_empty() == false {
@@ -90,14 +97,15 @@ impl Database {
 
             for (i, tag) in tags.iter().enumerate() {
                 if i == 0 {
-                    query = format!("{} posts.tags LIKE {}", query, tag);
+                    query = format!("{} posts.tags LIKE \'%{}%\'", query, tag);
                 }
                 else {
-                    query = format!("{} OR posts.tags LIKE {}", query, tag);
+                    query = format!("{} OR posts.tags LIKE \'%{}%\'", query, tag);
                 }
             }
-    
         }
+
+        println!("{}", query);
         
         connection.query(&query.to_string(),&[])
         .await
