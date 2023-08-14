@@ -23,7 +23,7 @@
         </table>                 
         </div>       
         <div class="flex-grow h-full w-full overflow-y-auto bg-gray-600">
-                <div class="px-20 font-medium text-gray-400 prose max-w-screen-lg prose-lg">
+                <div class="p-20 font-medium text-gray-400 prose max-w-screen-lg prose-lg">
                         <slot />
                 </div>
         </div>   

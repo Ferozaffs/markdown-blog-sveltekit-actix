@@ -4,7 +4,7 @@ use crate::database::Database;
 
 #[derive(Serialize, Debug)]
 struct PostSummary {
-    name: String,
+    title: String,
     image: String,
 }
 
@@ -12,13 +12,17 @@ struct PostSummary {
 async fn posts(db: web::Data<Database>, req: HttpRequest) -> Result<impl Responder> {
     let tags: String = req.match_info().query("tags").parse().unwrap();
     let split_tags = tags.split(",");
+    let mut vec: Vec<&str> = split_tags.collect();
+    if *vec.first().unwrap() == "*" {
+        vec = vec![];
+    }
 
-    let result = db.get_posts(split_tags.collect()).await;
-   
+    let result = db.get_posts(vec).await;
+
     let mut posts = Vec::new();
     for row in result.unwrap() {
         let post = PostSummary {
-            name: row.get(0),
+            title: row.get(0),
             image: row.get(1),
         };
 

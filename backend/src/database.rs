@@ -82,18 +82,18 @@ impl Database {
         .await
         .expect("Failed to get a connection from the pool");
 
-        let mut query = format!("SELECT blogs.name, blogs.image, blogs.tags 
-            FROM blogs");
+        let mut query = format!("SELECT posts.name, posts.image, posts.tags 
+            FROM posts");
 
         if tags.is_empty() == false {
             query = format!("{} WHERE", query);
 
             for (i, tag) in tags.iter().enumerate() {
                 if i == 0 {
-                    query = format!("{} blogs.tags LIKE {}", query, tag);
+                    query = format!("{} posts.tags LIKE {}", query, tag);
                 }
                 else {
-                    query = format!("{} OR blogs.tags LIKE {}", query, tag);
+                    query = format!("{} OR posts.tags LIKE {}", query, tag);
                 }
             }
     

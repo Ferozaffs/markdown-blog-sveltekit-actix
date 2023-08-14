@@ -1,18 +1,18 @@
 <script>
 	import ButtonRow from '$lib/ButtonRow.svelte';
-    import ArticlesListView from '$lib/ArticlesListView.svelte';
+    import PostsListView from '$lib/PostsListView.svelte';
     import About from '$lib/About.svelte';
 	import ProjectOverview from '$lib/ProjectOverview.svelte';
 	import { currentContent } from '$lib/store.js';
 
     const ContentArea = {
-        Articles: "articles",
+        Posts: "posts",
         Projects: "projects",
         About: "about"
     } 
 
     function showArticles(){
-        $currentContent = ContentArea.Articles;
+        $currentContent = ContentArea.Posts;
     }     
     function showProjects(){
         $currentContent = ContentArea.Projects;
@@ -24,16 +24,16 @@
 
 <div class="flex h-screen flex-col">
     <div class="flex justify-center items-center bg-gray-800">
-        <p class="h-24 text-5xl text-gray-400">Markdown blog</p>
+        <p class="py-5 h-24 text-5xl text-gray-400">Markdown blog</p>
     </div>
     
     <div class="flex h-fit justify-center bg-gray-600">
-        <ButtonRow buttonNames={['Articles', 'Projects', 'About']} buttonCallbacks={[showArticles, showProjects, showAbout]} />
+        <ButtonRow buttonNames={['Posts', 'Projects', 'About']} buttonCallbacks={[showArticles, showProjects, showAbout]} />
     </div>
     
     <div class="flex-1 bg-gray-600">
-        {#if $currentContent === ContentArea.Articles}
-            <ArticlesListView/>
+        {#if $currentContent === ContentArea.Posts}
+            <PostsListView/>
         {:else if $currentContent === ContentArea.Projects}
             <ProjectOverview/>
         {:else}
