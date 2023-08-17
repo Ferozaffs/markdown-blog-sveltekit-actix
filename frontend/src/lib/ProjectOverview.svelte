@@ -3,7 +3,7 @@
     import { goto } from '$app/navigation';
 
     async function getProjectOverview() {
-        const response = await self.fetch("http://127.0.0.1:8080/projectoverview")
+        const response = await self.fetch("http://localhost:8080/projectoverview")
         if (response.ok) {
   		    let data = response.json();	
             console.log(data);
@@ -36,7 +36,7 @@
                                 <table>
                                     <tr>
                                         <td>
-                                            <img src={"http://127.0.0.1:8080/images/".concat(child.image)} alt="" class="display: inline border-2 border-gray-800 dark:border-gray-800 w-12 h-12 rounded-lg overflow-hidden"/>
+                                            <img src={"http://localhost:8080/images/".concat(child.image)} alt="" class="display: inline border-2 border-gray-800 dark:border-gray-800 w-12 h-12 rounded-lg overflow-hidden"/>
                                         </td>
                                         <td>
                                             <p class="px-1">{child.name}</p>

@@ -10,7 +10,7 @@ pub struct Database {
 
 impl Database {
     pub async fn new() -> Self {
-        let database_url = "postgresql://postgres:1337asdf@localhost:5432/postgres";
+        let database_url = "postgresql://mdAdmin:1337asdf@db:5432/mdDatabase";
         
         let manager = PostgresConnectionManager::new_from_stringlike(database_url, NoTls)
             .expect("Failed to create connection manager");
@@ -104,8 +104,6 @@ impl Database {
                 }
             }
         }
-
-        println!("{}", query);
         
         connection.query(&query.to_string(),&[])
         .await

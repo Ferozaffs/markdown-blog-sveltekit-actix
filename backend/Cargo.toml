@@ -17,4 +17,6 @@ serde = { version ="1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 tokio-postgres = "0.7.8"
 
-
+[[bin]]
+name = "mdBackend"
+path = "src/main.rs"

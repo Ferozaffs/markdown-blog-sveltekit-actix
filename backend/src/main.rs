@@ -9,7 +9,7 @@ use actix_web::{web, App, HttpServer};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    fs::create_dir_all("images").unwrap();
+    fs::create_dir_all("assets/images").unwrap();
 
     let database = database::Database::new().await;
     let app_data = web::Data::new(database);
@@ -28,7 +28,7 @@ async fn main() -> std::io::Result<()> {
             .service(media::get_image)
             .service(posts::posts)
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("0.0.0.0", 8080))?
     .run()
     .await
 }

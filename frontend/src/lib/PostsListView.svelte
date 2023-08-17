@@ -6,7 +6,7 @@
     let promise = getPosts();
 
     async function getPosts() {    
-        const response = await self.fetch("http://127.0.0.1:8080/posts/".concat($currentTags))
+        const response = await self.fetch("http://localhost:8080/posts/".concat($currentTags))
         if (response.ok) {
   		    let data = response.json();	
             console.log(data);

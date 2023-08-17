@@ -3,6 +3,6 @@ use actix_web::{get, web, Responder};
 
 #[get("/images/{id}")]
 async fn get_image(id: web::Path<String>) -> impl Responder {
-    let path = format!("images/{}", id);
+    let path = format!("assets/images/{}", id);
     NamedFile::open(path)
 }

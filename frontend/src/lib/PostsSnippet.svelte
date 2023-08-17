@@ -20,7 +20,7 @@
 
 <div class="h-fit w-fit text-gray-500 bg-gray-800 hover:bg-gray-900 font-medium rounded-lg px-5 py-2.5 mr-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700">
     <button on:click={() => gotoPost(id)} class="h-fit w-fit" >
-        <img src={"http://127.0.0.1:8080/images/".concat(image)}  alt={imageAlt} class="w-fit"/>
+        <img src={"http://localhost:8080/images/".concat(image)}  alt={imageAlt} class="w-fit"/>
         <p class="text-xl text-gray-400">{title}</p>
         <p class="py-2 text-left">{description}</p>
     </button>
