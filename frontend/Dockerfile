@@ -21,8 +21,8 @@ FROM node:18-alpine as deploy
 WORKDIR /app
 RUN rm -rf ./*
 COPY --from=builder /app/package.json .
-COPY --from=builder /app/build .
+COPY --from=builder /app/package-lock.json .
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/node_modules ./node_modules
 
-RUN yarn --prod
-
-CMD ["node", "index.js"]
+CMD ["node", "build"]
