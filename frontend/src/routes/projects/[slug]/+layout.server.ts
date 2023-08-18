@@ -6,7 +6,6 @@ export const load: Load = async ({ params }) => {
         if (response.ok) {
   		    let data = response.json();	
             return data;	
-		} 	
+		}
     }
-
 };
