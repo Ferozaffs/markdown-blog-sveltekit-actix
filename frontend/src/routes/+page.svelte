@@ -4,12 +4,7 @@
     import About from '$lib/About.svelte';
 	import ProjectOverview from '$lib/ProjectOverview.svelte';
 	import { currentContent } from '$lib/store.js';
-
-    const ContentArea = {
-        Posts: "posts",
-        Projects: "projects",
-        About: "about"
-    } 
+    import { ContentArea } from '$lib/Constants.svelte';
 
     function showArticles(){
         $currentContent = ContentArea.Posts;

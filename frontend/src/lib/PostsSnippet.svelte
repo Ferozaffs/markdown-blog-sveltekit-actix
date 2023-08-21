@@ -9,7 +9,7 @@
 
     import { goto } from '$app/navigation';
     function gotoPost(postId: string) {
-        goto("/post/".concat(postId))
+        goto("/posts/".concat(postId));
     }
 
     import { currentTags } from '$lib/store.js';

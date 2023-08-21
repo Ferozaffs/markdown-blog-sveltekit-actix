@@ -3,7 +3,7 @@ import { compile } from 'mdsvex';
 
 export const load: Load = async ({ params }) => {
     if (params.slug != undefined) {
-        let query = "http://backend:8080/projectcontent/".concat(params.slug);
+        let query = "http://backend:8080/postcontent/".concat(params.slug);
         const response = await fetch(query);
         if (response.ok) {
             let data = await response.text();	  
@@ -11,5 +11,4 @@ export const load: Load = async ({ params }) => {
             return {content: compiledResponse?.code };
         }
     }
-
 };
