@@ -1,4 +1,5 @@
-use actix_web::{get, web, Responder, Result, HttpRequest};
+use actix_web::{get, web, Responder, Result, HttpRequest, HttpResponse};
+use actix_web::http::header::ContentType;
 use serde::Serialize;
 use uuid::Uuid;
 use crate::database::Database;
@@ -41,4 +42,35 @@ async fn posts(db: web::Data<Database>, req: HttpRequest) -> Result<impl Respond
     }
 
     Ok(web::Json(posts))
+}
+
+#[get("/postcontent/{id}")]
+async fn post_content(db: web::Data<Database>, req: HttpRequest) -> Result<impl Responder> {
+    let id: String = req.match_info().query("id").parse().unwrap();
+    let result = db.get_post_content(&id).await;
+    let content: String = result.unwrap().get(0).unwrap().get(0);
+
+    Ok(HttpResponse::Ok()
+        .content_type(ContentType::plaintext())
+        .insert_header(("X-Hdr", "sample"))
+        .body(content))
+}
+
+#[get("/postsummary/{id}")]
+async fn post_summary(db: web::Data<Database>, req: HttpRequest) -> Result<impl Responder> {
+    let id: String = req.match_info().query("id").parse().unwrap();
+    let result = db.get_post_summary(&id).await;
+    let row = result.unwrap();
+    let data = row.get(0).unwrap();
+    let post = PostSummary {
+        id: data.get(0),
+        title: data.get(1),
+        image: data.get(2),
+        date: data.get(3),
+        description: data.get(4),
+        tags: data.get(5),
+        project_id: data.get(6),
+    };
+
+    Ok(web::Json(post))
 }

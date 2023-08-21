@@ -104,7 +104,44 @@ impl Database {
                 }
             }
         }
-        
+
+        query = format!("{} ORDER BY posts.date DESC", query);
+           
+        connection.query(&query.to_string(),&[])
+        .await
+    }
+
+    pub async fn get_post_summary(&self, id: &str) -> Result<Vec<Row>, Error> {
+        let connection = self.pool.get()
+        .await
+        .expect("Failed to get a connection from the pool");
+
+        let query = format!("SELECT 
+            posts.id, 
+            posts.name, 
+            posts.image, 
+            TO_CHAR(posts.date, 'yyyy-mm-dd'), 
+            posts.description,
+            posts.tags,
+            posts.project_id
+            FROM posts
+            WHERE posts.id='{}'",
+        id);
+
+        connection.query(&query.to_string(), &[])
+        .await
+    }
+
+    pub async fn get_post_content(&self, id: &str) -> Result<Vec<Row>, Error> {
+        let connection = self.pool.get()
+        .await
+        .expect("Failed to get a connection from the pool");
+
+        let query = format!("SELECT posts.content 
+            FROM posts 
+            WHERE posts.id='{}'",
+        id);
+
         connection.query(&query.to_string(),&[])
         .await
     }
