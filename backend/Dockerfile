@@ -19,4 +19,4 @@ RUN cargo build --release
 EXPOSE 8080
 
 # Run your Rust backend application
-CMD ["target/release/mdBackend"]
+CMD ["target/release/md_backend"]

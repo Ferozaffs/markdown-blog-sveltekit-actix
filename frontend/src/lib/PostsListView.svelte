@@ -2,11 +2,12 @@
     import PostSnippet from '$lib/PostsSnippet.svelte';
     import { BarLoader } from 'svelte-loading-spinners';
     import { currentTags } from '$lib/store.js';
+    import { PUBLIC_API_URL } from '$env/static/public'
 
     let promise = getPosts();
 
     async function getPosts() {    
-        const response = await self.fetch("http://localhost:8080/posts/".concat($currentTags))
+        const response = await self.fetch(PUBLIC_API_URL.concat("/posts/").concat($currentTags))
         if (response.ok) {
   		    let data = response.json();	
             console.log(data);

@@ -5,6 +5,7 @@
 	import ProjectOverview from '$lib/ProjectOverview.svelte';
 	import { currentContent } from '$lib/store.js';
     import { ContentArea } from '$lib/Constants.svelte';
+	import FilterWidget from '$lib/FilterWidget.svelte';
 
     function showArticles(){
         $currentContent = ContentArea.Posts;
@@ -22,8 +23,20 @@
         <p class="py-5 h-24 text-5xl text-gray-400">Markdown blog</p>
     </div>
     
-    <div class="flex h-fit justify-center bg-gray-600">
-        <ButtonRow buttonNames={['Posts', 'Projects', 'About']} buttonCallbacks={[showArticles, showProjects, showAbout]} />
+    <div class="bg-gray-600">
+    <table class="w-full table-fixed">
+        <tr>
+        <td class="w-1/6"/>
+        <td class="flex h-fit justify-center">
+            <ButtonRow buttonNames={['Posts', 'Projects', 'About']} buttonCallbacks={[showArticles, showProjects, showAbout]} />
+        </td>
+        <td class="w-1/6">
+            {#if $currentContent === ContentArea.Posts}
+                <FilterWidget/>
+            {/if}
+        </td>
+        </tr>
+    </table>    
     </div>
     
     <div class="flex-1 bg-gray-600">
