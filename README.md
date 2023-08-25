@@ -1,6 +1,17 @@
 # Markdown blog
 A "blog style" framework written in sveltekit/rust. Where the content is written in markdown to make post creation faster.
 
+## Installation
+Start development:
+'''sh
+docker-compose -f docker-compose-dev.yml up --build
+''''
+
+Start production:
+'''sh
+docker-compose up --build
+''''
+
 ## What is this blog trying to solve?
 Primary purpose of this project is to create a blog format to document ongoing projects with as little overhead as possible.
 

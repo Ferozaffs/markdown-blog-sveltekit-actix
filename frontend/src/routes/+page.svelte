@@ -3,12 +3,13 @@
     import PostsListView from '$lib/PostsListView.svelte';
     import About from '$lib/About.svelte';
 	import ProjectOverview from '$lib/ProjectOverview.svelte';
-	import { currentContent } from '$lib/store.js';
+	import { currentContent, currentTags } from '$lib/store.js';
     import { ContentArea } from '$lib/Constants.svelte';
 	import FilterWidget from '$lib/FilterWidget.svelte';
 
     function showArticles(){
         $currentContent = ContentArea.Posts;
+        $currentTags = []
     }     
     function showProjects(){
         $currentContent = ContentArea.Projects;

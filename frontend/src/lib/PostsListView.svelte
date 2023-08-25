@@ -7,7 +7,7 @@
     let promise = getPosts();
 
     async function getPosts() {    
-        const response = await self.fetch(PUBLIC_API_URL.concat("/posts/").concat($currentTags))
+        const response = await self.fetch(PUBLIC_API_URL.concat("/posts/*"))
         if (response.ok) {
   		    let data = response.json();	
             console.log(data);
@@ -15,11 +15,14 @@
 		} 	
     }
 
-    //Only trigger if tag is NOT *
-    $: $currentTags !== "*" ? reload() : null;
+    function filterPost(tags: string) {
+        let splitTags = tags.split(",");
 
-    async function reload() {
-        promise = getPosts();
+        if (splitTags.some(r=> $currentTags.includes(r))) {
+            return true;
+        }
+
+        return false;
     }
 
 </script>
@@ -31,14 +34,16 @@
 {:then po}
     <div class="w-full px-20 grid content-center gap-10 md:grid-cols-2 s:grid-cols-1 xl:grid-cols-4">
         {#each po as post}
-            <PostSnippet 
-                id={post.id}
-                title={post.title} 
-                image={post.image} 
-                date={post.date} 
-                description={post.description}
-                tags={post.tags.split(",")}
-            />
+            {#if $currentTags.length === 0 || filterPost(post.tags)}
+                <PostSnippet 
+                    id={post.id}
+                    title={post.title} 
+                    image={post.image} 
+                    date={post.date} 
+                    description={post.description}
+                    tags={post.tags.split(",")}
+                />                         
+            {/if}
         {/each}
     </div>
 {:catch error}
