@@ -7,7 +7,6 @@
         const response = await self.fetch(PUBLIC_API_URL.concat("/projectoverview"))
         if (response.ok) {
   		    let data = response.json();	
-            console.log(data);
             return data;	
 		} 	
     }

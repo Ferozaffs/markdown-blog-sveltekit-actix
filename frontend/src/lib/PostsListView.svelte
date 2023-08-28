@@ -5,12 +5,17 @@
     import { PUBLIC_API_URL } from '$env/static/public'
 
     let promise = getPosts();
+    export let storedTags = [];
 
     async function getPosts() {    
         const response = await self.fetch(PUBLIC_API_URL.concat("/posts/*"))
         if (response.ok) {
-  		    let data = response.json();	
-            console.log(data);
+  		    let data = await response.json();
+
+            for (let i = 0; i < data.length; i++){
+                storeTags(data[i].tags.split(","))
+            }
+	
             return data;	
 		} 	
     }
@@ -23,6 +28,18 @@
         }
 
         return false;
+    }
+
+    function storeTags(tags: string[]) {
+        for(let i = 0; i < tags.length; i++) {
+            if (storedTags.indexOf(tags[i]) === -1) {
+                storedTags.push(tags[i])
+            }
+        }
+    }
+
+    export function getTags() {
+        return storedTags;
     }
 
 </script>

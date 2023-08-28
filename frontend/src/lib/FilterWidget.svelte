@@ -1,9 +1,16 @@
-<script>
+<script lang="ts">
     export let items = [['Item 1', false], ['Item 2', false], ['Item 3', false]];
     let visible = false;
 
     function toggleList() {
         visible = !visible;
+    }
+
+    export function setItems(newItems: string[]) {
+        items = [];
+        for (let i = 0; i < newItems.length; i++) {      
+            items.push([newItems[i], false])
+        }
     }
 </script>
 

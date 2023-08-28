@@ -7,6 +7,14 @@
     import { ContentArea } from '$lib/Constants.svelte';
 	import FilterWidget from '$lib/FilterWidget.svelte';
 
+    let tags;
+    let filterWidget;
+    $: tags && loadTags();
+
+    function loadTags() {
+        filterWidget.setItems(tags);
+    }
+
     function showArticles(){
         $currentContent = ContentArea.Posts;
         $currentTags = []
@@ -17,6 +25,7 @@
     function showAbout(){
         $currentContent = ContentArea.About;
     }
+
 </script>
 
 <div class="flex h-screen flex-col">
@@ -33,7 +42,7 @@
         </td>
         <td class="w-1/6">
             {#if $currentContent === ContentArea.Posts}
-                <FilterWidget/>
+                <FilterWidget bind:this="{filterWidget}"/>
             {/if}
         </td>
         </tr>
@@ -42,7 +51,7 @@
     
     <div class="flex-1 bg-gray-600">
         {#if $currentContent === ContentArea.Posts}
-            <PostsListView/>
+            <PostsListView bind:storedTags={tags}/>
         {:else if $currentContent === ContentArea.Projects}
             <ProjectOverview/>
         {:else}
