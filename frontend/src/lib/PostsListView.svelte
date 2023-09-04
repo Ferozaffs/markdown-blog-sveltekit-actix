@@ -12,9 +12,11 @@
         if (response.ok) {
   		    let data = await response.json();
 
+            let foundTags = [];
             for (let i = 0; i < data.length; i++){
-                storeTags(data[i].tags.split(","))
+                storeTags(foundTags, data[i].tags.split(","))
             }
+            storedTags = foundTags;
 	
             return data;	
 		} 	
@@ -30,10 +32,11 @@
         return false;
     }
 
-    function storeTags(tags: string[]) {
+    function storeTags(foundTags: string[], tags: string[]) {
+        
         for(let i = 0; i < tags.length; i++) {
-            if (storedTags.indexOf(tags[i]) === -1) {
-                storedTags.push(tags[i])
+            if (foundTags.indexOf(tags[i]) === -1) {
+                foundTags.push(tags[i])
             }
         }
     }

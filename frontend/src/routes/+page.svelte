@@ -8,16 +8,37 @@
 	import FilterWidget from '$lib/FilterWidget.svelte';
 
     let tags;
-    let filterWidget;
+    let filterWidget = null
     $: tags && loadTags();
+    $: $currentTags && updateFilter();
 
-    function loadTags() {
-        filterWidget.setItems(tags);
+    function loadTags() {     
+        if (filterWidget !== null)
+        {
+            filterWidget.setItems(tags);
+        }
+    }
+
+    function filterTags() {
+        if (filterWidget !== null)
+        {
+            let items = filterWidget.getActiveItems();
+            if (items.toString() !== $currentTags.toString() ) {
+                $currentTags = items;
+            }
+        }
+    }
+
+    function updateFilter() {
+        if (filterWidget !== null)
+        {
+            filterWidget.setActiveItems($currentTags);
+        }
     }
 
     function showArticles(){
         $currentContent = ContentArea.Posts;
-        $currentTags = []
+        $currentTags = [];
     }     
     function showProjects(){
         $currentContent = ContentArea.Projects;
@@ -25,6 +46,7 @@
     function showAbout(){
         $currentContent = ContentArea.About;
     }
+
 
 </script>
 
@@ -42,7 +64,7 @@
         </td>
         <td class="w-1/6">
             {#if $currentContent === ContentArea.Posts}
-                <FilterWidget bind:this="{filterWidget}"/>
+                <FilterWidget filterCallback={filterTags} bind:this="{filterWidget}"/>
             {/if}
         </td>
         </tr>

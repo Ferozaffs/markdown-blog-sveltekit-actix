@@ -16,7 +16,7 @@
 
     import { currentTags } from '$lib/store.js';
     function setTag(tag: string) {
-         $currentTags = tag;
+         $currentTags = [tag];
     }
 </script>
 
