@@ -4,6 +4,8 @@
 
 ## Physical Health Benefits
 
+@@IMAGE
+
 ### Weight Management
 
 - Burn calories and aid in weight loss or maintenance.
@@ -21,6 +23,8 @@
 - Important for physical performance and everyday activities, such as lifting groceries or playing with your children.
 
 ## Mental and Emotional Benefits
+
+@@IMAGE
 
 ### Stress Reduction
 
