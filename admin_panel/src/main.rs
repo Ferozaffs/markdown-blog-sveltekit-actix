@@ -41,19 +41,21 @@ struct AdminPanel {
     cache: CommonMarkCache,
     file_load_state: Option<FileLoadState>,
     open_file_dialog: Option<FileDialog>,
-    meta_data: Option<MetaData>
+    meta_data: Option<MetaData>,
+    tag_field: String,
 }
 
 impl Default for AdminPanel {
     fn default() -> Self {
         Self {
-            markdown: "_".to_string(),
-            prev_markdown: "_".to_string(),
+            markdown: "".to_string(),
+            prev_markdown: "".to_string(),
             cache: CommonMarkCache::default(),
             opened_markdown_file: "".to_string(),
             file_load_state: None,
             open_file_dialog: None,
-            meta_data: None
+            meta_data: None,
+            tag_field: "".to_string(),
         }
     }
 }
@@ -70,6 +72,11 @@ impl eframe::App for AdminPanel {
                     self.file_load_state = Some(FileLoadState::LoadMarkdown);
                 }
                 else if ui.button("Save").clicked() {
+                    let meta_data = self.markdown.find("@@META");
+                    if meta_data.is_none() {
+                        self.genereate_meta_data();
+                    }
+
                     fs::write(self.opened_markdown_file.clone() + "_new", self.markdown.clone()).expect("Unable to write file");
                 }
                 else if ui.button("Upload").clicked() {
@@ -83,28 +90,63 @@ impl eframe::App for AdminPanel {
 
             ui.horizontal(|ui| {
                 ui.set_min_height(height);
+                //Options panel
                 egui::ScrollArea::vertical()
                     .id_source("data")
                     .show(ui, |ui| {
                         ui.vertical(|ui| {
                             ui.add_sized(
                                 [width * 0.2, height * 0.1],
-                                egui::Button::new("Test1")
+                                egui::Label::new("Options")
                             );
-                            ui.add_sized(
-                                [width * 0.2, height * 0.1],
-                                egui::Button::new("Test2")
-                            );
-                            ui.add_sized(
-                                [width * 0.2, height * 0.1],
-                                egui::Button::new("Test3")
-                            );
-                            ui.add_sized(
-                                [width * 0.2, height * 0.1],
-                                egui::Button::new("Test4")
-                            );
+
+                            let mut regenerate = false;
+                            if let Some(meta_data) = self.meta_data.as_mut() {                              
+                                ui.label("Title");
+
+                                let response = ui.add(egui::TextEdit::singleline(&mut meta_data.title));
+                                if response.changed() {
+                                    regenerate = true;
+                                }
+
+                                ui.label("Tags");
+                                ui.horizontal(|ui| {
+                                    ui.add(egui::TextEdit::singleline(&mut self.tag_field));
+                                    let response = ui.button("Add");
+                                    if response.clicked() {
+                                        meta_data.tags.push(self.tag_field.clone());
+                                        regenerate = true;
+                                    }
+                                });
+
+                                let mut index_removal: Vec<usize> = Vec::new(); 
+                                for (i, tag) in meta_data.tags.iter().enumerate() {
+                                    ui.horizontal(|ui| {
+                                        ui.label(tag);
+                                        let response = ui.button("X");
+                                        if response.clicked() {
+                                            index_removal.push(i)
+                                        }
+                                    });                                  
+                                }
+
+                                if index_removal.len() > 0 {                                       
+                                    for index in index_removal.iter() {
+                                        meta_data.tags.remove(*index);
+                                    }
+                                    regenerate = true
+                                }
+                            }
+                            else {
+                                ui.label("No data");
+                            }
+
+                            if regenerate == true {
+                                self.regenereate_meta_data(true);
+                            }
                         });
                     });
+                //Markdown panel
                 egui::ScrollArea::vertical()
                     .id_source("source")
                     .show(ui, |ui| {
@@ -113,6 +155,7 @@ impl eframe::App for AdminPanel {
                             egui::TextEdit::multiline(&mut self.markdown),
                         );
                     });
+                //Preview panel
                 egui::ScrollArea::vertical()
                     .id_source("preview")
                     .show(ui, |ui| {
@@ -127,11 +170,32 @@ impl eframe::App for AdminPanel {
 
 impl AdminPanel {
     fn genereate_meta_data(&mut self) {
-        let mut meta_data: String = "@@META\n".to_string();
-        meta_data.push_str("@TITLE: Title\n");
-        meta_data.push_str("@TAGS: Tag1, Tag2\n");
+        self.meta_data = Some(MetaData{
+            title: String::from("Title"),
+            tags: vec![
+                String::from("Tag1"),
+                String::from("Tag2")
+             ]
+        });
 
-        self.markdown = format!("{}\n{}", meta_data, self.markdown);
+        self.regenereate_meta_data(false);
+    }
+
+    fn regenereate_meta_data(&mut self, clean: bool) {
+        let mut md_meta: String = "@@META\n".to_string();
+        md_meta.push_str(format!("@TITLE: {}\n", self.meta_data.as_ref().unwrap().title).as_str());
+        md_meta.push_str("@TAGS: ");
+        for tag in self.meta_data.as_ref().unwrap().tags.iter() {
+            md_meta.push_str(format!("{} ", tag).as_str());
+        }
+
+        if clean == true {
+            let lines: Vec<&str> = self.markdown.lines().collect();
+            let cleaned_lines: Vec<&str> = lines.iter().skip(4).cloned().collect();
+            self.markdown = cleaned_lines.join("\n");
+        }
+
+        self.markdown = format!("{}\n\n{}", md_meta, self.markdown);
     }
 
     fn load_meta_data(&mut self){
@@ -140,12 +204,8 @@ impl AdminPanel {
 
     fn check_for_macros(&mut self) {
         if self.prev_markdown != self.markdown {
-
             let meta_data = self.markdown.find("@@META");
-            if meta_data.is_none() {
-                self.genereate_meta_data();
-            }
-            else {
+            if meta_data.is_some() {
                 self.load_meta_data();
             }
             
