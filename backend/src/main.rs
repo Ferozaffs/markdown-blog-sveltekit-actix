@@ -1,11 +1,12 @@
 pub mod database;
-pub mod projects;
 pub mod media;
 pub mod posts;
+pub mod projects;
+pub mod uploads;
 
-use std::fs;
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
+use std::fs;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -15,9 +16,7 @@ async fn main() -> std::io::Result<()> {
     let app_data = web::Data::new(database);
 
     HttpServer::new(move || {
-        let cors = Cors::default()
-        .allow_any_origin()
-        .send_wildcard();
+        let cors = Cors::default().allow_any_origin().send_wildcard();
 
         App::new()
             .app_data(app_data.clone())
@@ -29,6 +28,7 @@ async fn main() -> std::io::Result<()> {
             .service(posts::posts)
             .service(posts::post_summary)
             .service(posts::post_content)
+            .service(uploads::upload_post)
     })
     .bind(("0.0.0.0", 8080))?
     .run()

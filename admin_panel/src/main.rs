@@ -1,5 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+pub mod data;
+pub mod webconnector;
+
 use std::fs;
 
 use eframe::egui;
@@ -30,11 +33,6 @@ enum FileLoadState {
     LoadImage,
 }
 
-struct MetaData {
-    title: String,
-    tags: Vec<String>,
-}
-
 struct AdminPanel {
     markdown: String,
     prev_markdown: String,
@@ -42,7 +40,7 @@ struct AdminPanel {
     cache: CommonMarkCache,
     file_load_state: Option<FileLoadState>,
     open_file_dialog: Option<FileDialog>,
-    meta_data: Option<MetaData>,
+    meta_data: Option<data::MetaData>,
     tag_field: String,
 }
 
@@ -55,7 +53,7 @@ impl Default for AdminPanel {
             opened_markdown_file: "".to_string(),
             file_load_state: None,
             open_file_dialog: None,
-            meta_data: Some(MetaData {
+            meta_data: Some(data::MetaData {
                 title: String::from(""),
                 tags: vec![],
             }),
@@ -80,7 +78,7 @@ impl eframe::App for AdminPanel {
                     )
                     .expect("Unable to write file");
                 } else if ui.button("Upload").clicked() {
-                    self.markdown = "Upload".to_owned();
+                    webconnector::upload_post(self.markdown.clone(), self.meta_data.clone());
                 }
             });
 
