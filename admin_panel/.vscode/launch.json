@@ -11,30 +11,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=admin_panel",
-                    "--package=admin_panel"
+                    "--bin=md_admin_panel",
+                    "--package=md_admin_panel"
                 ],
                 "filter": {
-                    "name": "admin_panel",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'admin_panel'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=admin_panel",
-                    "--package=admin_panel"
-                ],
-                "filter": {
-                    "name": "admin_panel",
+                    "name": "md_admin_panel",
                     "kind": "bin"
                 }
             },

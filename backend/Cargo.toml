@@ -11,14 +11,16 @@ actix-files = "0.6.2"
 actix-web = "4"
 bb8 = "0.8.1"
 bb8-postgres = "0.8.1"
-postgres = { version = "0.19.5", features = ["with-uuid-1"] }
-uuid = { version = "1", features = ["serde"] }
+postgres = { version = "0.19.5", features = ["with-uuid-1","with-chrono-0_4"] }
+uuid = { version = "1", features = ["serde","v4"] }
 serde = { version ="1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 tokio-postgres = "0.7.8"
 regex = "1"
 nanoid = "0.4.0"
 lazy_static = "1.4"
+base64 = "0.22"
+chrono = "0.4"
 
 [[bin]]
 name = "md_backend"
