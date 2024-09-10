@@ -9,13 +9,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write;
 use std::sync::Mutex;
-
-#[derive(Deserialize)]
-struct PostData {
-    markdown: String,
-    title: String,
-    tags: String,
-}
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 struct ImageData {
@@ -35,9 +29,12 @@ struct PostResponse {
     imagerequest: Vec<ImageUploadData>,
 }
 
-#[derive(Serialize, Debug)]
-struct ImageResponse {
-    status: String,
+pub struct MetaData {
+    pub fingerprint: Uuid,
+    pub project_id: Uuid,
+    pub title: String,
+    pub tags: String,
+    pub description: String,
 }
 
 lazy_static! {
@@ -48,24 +45,27 @@ lazy_static! {
 }
 
 #[post("/upload_post")]
-pub async fn upload_post(db: web::Data<Database>, mut data: web::Json<PostData>) -> impl Responder {
+pub async fn upload_post(db: web::Data<Database>, mut data: web::Json<String>) -> impl Responder {
     let mut status = PostResponse {
         status: "Success".to_string(),
         imagerequest: [].to_vec(),
     };
 
-    let paths = extract_image_paths(data.markdown.as_str());
+    let mut text = data.into_inner();
+
+    let meta_data = filter_meta(&mut text);
+
+    let paths = extract_image_paths(text.as_str());
     let unique_paths: Vec<String> = paths
         .into_iter()
         .collect::<HashSet<_>>()
         .into_iter()
         .collect();
 
-    remove_meta(&mut data.markdown);
     for p in unique_paths {
         let id = nanoid!();
 
-        replace_path(&mut data.markdown, &p, &id);
+        replace_path(&mut text, &p, &id);
 
         let image_data = ImageUploadData {
             image_url: p,
@@ -78,9 +78,9 @@ pub async fn upload_post(db: web::Data<Database>, mut data: web::Json<PostData>)
         status.imagerequest.push(image_data);
     }
 
-    let mut id = "undefined".to_string();
+    let mut post_image: String = "undefined".to_string();
     if !status.imagerequest.is_empty() {
-        id = status
+        post_image = status
             .imagerequest
             .first()
             .unwrap()
@@ -89,7 +89,8 @@ pub async fn upload_post(db: web::Data<Database>, mut data: web::Json<PostData>)
     }
 
     tokio::spawn(async move {
-        save_post(db, data.into_inner(), id).await;
+        db.save_post(meta_data, text.as_str(), post_image.as_str())
+            .await;
     });
 
     HttpResponse::Ok().json(status)
@@ -97,9 +98,7 @@ pub async fn upload_post(db: web::Data<Database>, mut data: web::Json<PostData>)
 
 #[post("/upload_image")]
 pub async fn upload_image(_db: web::Data<Database>, data: web::Json<ImageData>) -> impl Responder {
-    let mut status = ImageResponse {
-        status: "Success".to_string(),
-    };
+    let mut status = "Success".to_string();
 
     let mut fp = FINGERPRINTS.lock().unwrap();
 
@@ -114,10 +113,42 @@ pub async fn upload_image(_db: web::Data<Database>, data: web::Json<ImageData>) 
             save_image(data.into_inner(), &filename).await;
         });
     } else {
-        status.status = "Failed".to_string()
+        status = "Failed".to_string()
     }
 
     HttpResponse::Ok().json(status)
+}
+
+fn filter_meta(text: &mut String) -> MetaData {
+    let mut meta_data = MetaData {
+        fingerprint: Uuid::new_v4(),
+        project_id: Uuid::nil(),
+        title: String::new(),
+        tags: String::new(),
+        description: String::new(),
+    };
+
+    let mut count = 0;
+    for line in text.lines() {
+        if !line.starts_with('@') && !line.is_empty() {
+            break;
+        }
+
+        if let Some(data) = line.strip_prefix("@TITLE: ") {
+            meta_data.title = data.trim().to_string();
+        } else if let Some(data) = line.strip_prefix("@TAGS: ") {
+            meta_data.tags = data.trim().to_string();
+        }
+
+        count += 1;
+    }
+
+    let lines = text.lines().skip(count);
+    let remaining_text = lines.collect::<Vec<&str>>().join("\n");
+
+    text.clear();
+    text.push_str(remaining_text.as_str());
+    meta_data
 }
 
 fn extract_image_paths(input: &str) -> Vec<String> {
@@ -147,30 +178,6 @@ fn replace_path(text: &mut String, path: &String, id: &String) {
 
     text.clear();
     text.push_str(result.as_str());
-}
-
-fn remove_meta(text: &mut String) {
-    let lines = text.lines().skip(4);
-    let remaining_text = lines.collect::<Vec<&str>>().join("\n");
-
-    text.clear();
-    text.push_str(remaining_text.as_str());
-}
-
-async fn save_post(db: web::Data<Database>, data: PostData, image_fingerprint: String) {
-    let result = db
-        .save_post(
-            data.title.as_str(),
-            data.tags.as_str(),
-            data.markdown.as_str(),
-            image_fingerprint.as_str(),
-        )
-        .await;
-
-    match result {
-        Ok(value) => println!("Uploaded post: {}", value),
-        Err(e) => println!("Error uploading post: {}", e),
-    }
 }
 
 async fn save_image(data: ImageData, filename: &str) {

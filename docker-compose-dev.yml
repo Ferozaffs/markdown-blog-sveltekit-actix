@@ -1,25 +1,24 @@
 version: '3'
 services:
-  backend:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./backend
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
-    volumes:
-      - ./backend/assets:/app/assets
-
-  frontend:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./frontend
-    ports:
-      - "5173:5173"
-    volumes:
-      - /app/node_modules
-      - ./frontend/:/app
+#backend:
+#  build:
+#    dockerfile: Dockerfile.dev
+#    context: ./backend
+#  ports:
+#    - "8080:8080"
+#  depends_on:
+#    - db
+#  volumes:
+#    - ./backend/assets:/app/assets#
+#frontend:
+#  build:
+#    dockerfile: Dockerfile.dev
+#    context: ./frontend
+#  ports:
+#    - "5173:5173"
+#  volumes:
+#    - /app/node_modules
+#    - ./frontend/:/app
 
   db:
     image: postgres:latest
@@ -37,6 +36,8 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+    ports:
+      - 5432:5432
 
   adminer:
     image: adminer

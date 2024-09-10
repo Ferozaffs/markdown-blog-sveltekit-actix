@@ -6,6 +6,8 @@ use uuid::Uuid;
 
 type ConnectionPool = Pool<PostgresConnectionManager<NoTls>>;
 
+use crate::uploads::MetaData;
+
 pub struct Database {
     pool: ConnectionPool,
 }
@@ -169,10 +171,9 @@ impl Database {
 
     pub async fn save_post(
         &self,
-        title: &str,
-        tags: &str,
+        md: MetaData,
         markdown: &str,
-        image: &str,
+        image_fingerprint: &str,
     ) -> Result<u64, Error> {
         let connection = self
             .pool
@@ -190,14 +191,14 @@ impl Database {
             .execute(
                 &query,
                 &[
-                    &Uuid::new_v4(),
-                    &title,
-                    &image,
-                    &Uuid::nil(),
-                    &tags,
+                    &md.fingerprint,
+                    &md.title,
+                    &image_fingerprint,
+                    &md.project_id,
+                    &md.tags,
                     &markdown,
                     &now.naive_utc().date(),
-                    &"Temp description",
+                    &md.description,
                 ],
             )
             .await

@@ -1,15 +1,6 @@
 use crate::data;
 
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
-use serde_json::json;
-
-#[derive(Serialize, Deserialize)]
-struct Post {
-    markdown: String,
-    title: String,
-    tags: String,
-}
 
 #[tokio::main]
 pub async fn upload_post(
@@ -17,13 +8,8 @@ pub async fn upload_post(
     meta_data: Option<data::MetaData>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match meta_data {
-        Some(meta) => {
-            let concatenated_tags = meta.tags.join(" ");
-            let data = Post {
-                markdown: markdown,
-                title: meta.title,
-                tags: concatenated_tags,
-            };
+        Some(_meta) => {
+            let data = markdown;
 
             let json_data = serde_json::to_string(&data)?;
 

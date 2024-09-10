@@ -175,8 +175,14 @@ impl AdminPanel {
         let mut md_meta: String = "@META\n".to_string();
         md_meta.push_str(format!("@TITLE: {}\n", self.meta_data.as_ref().unwrap().title).as_str());
         md_meta.push_str("@TAGS: ");
-        for tag in self.meta_data.as_ref().unwrap().tags.iter() {
-            md_meta.push_str(format!("{} ", tag).as_str());
+
+        let tags = &self.meta_data.as_ref().unwrap().tags;
+        for (i, tag) in tags.iter().enumerate() {
+            if i == tags.len() - 1 {
+                md_meta.push_str(format!("{}", tag).as_str());
+            } else {
+                md_meta.push_str(format!("{},", tag).as_str());
+            }
         }
 
         if clean == true {
@@ -203,7 +209,7 @@ impl AdminPanel {
             meta_data.tags.clear();
             let re = Regex::new(r"@TAGS:\s(.*)").unwrap();
             if let Some(caps) = re.captures(self.markdown.as_str()) {
-                let tags = caps[1].split(" ");
+                let tags = caps[1].split(",");
                 for tag in tags {
                     if tag.len() > 0 {
                         meta_data.tags.push(tag.to_string());
