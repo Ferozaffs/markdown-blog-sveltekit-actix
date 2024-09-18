@@ -78,7 +78,8 @@ impl eframe::App for AdminPanel {
                     )
                     .expect("Unable to write file");
                 } else if ui.button("Upload").clicked() {
-                    webconnector::upload_post(self.markdown.clone(), self.meta_data.clone());
+                    let _ =
+                        webconnector::upload_post(self.markdown.clone(), self.meta_data.clone());
                 }
             });
 

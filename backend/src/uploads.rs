@@ -1,5 +1,6 @@
 use crate::database::Database;
-use actix_web::{post, web, HttpResponse, Responder};
+use actix_web::http::header::AUTHORIZATION;
+use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use base64::prelude::*;
 use lazy_static::lazy_static;
 use nanoid::nanoid;
@@ -45,78 +46,104 @@ lazy_static! {
 }
 
 #[post("/upload_post")]
-pub async fn upload_post(db: web::Data<Database>, mut data: web::Json<String>) -> impl Responder {
+pub async fn upload_post(
+    req: HttpRequest,
+    db: web::Data<Database>,
+    data: web::Json<String>,
+) -> impl Responder {
     let mut status = PostResponse {
         status: "Success".to_string(),
         imagerequest: [].to_vec(),
     };
 
-    let mut text = data.into_inner();
+    if let Some(auth_header) = req.headers().get(AUTHORIZATION) {
+        if let Ok(auth_str) = auth_header.to_str() {
+            let result = db.is_auth_valid(auth_str).await;
+            if let Ok(true) = result {
+                let mut text = data.into_inner();
 
-    let meta_data = filter_meta(&mut text);
+                let meta_data = filter_meta(&mut text);
 
-    let paths = extract_image_paths(text.as_str());
-    let unique_paths: Vec<String> = paths
-        .into_iter()
-        .collect::<HashSet<_>>()
-        .into_iter()
-        .collect();
+                let paths = extract_image_paths(text.as_str());
+                let unique_paths: Vec<String> = paths
+                    .into_iter()
+                    .collect::<HashSet<_>>()
+                    .into_iter()
+                    .collect();
 
-    for p in unique_paths {
-        let id = nanoid!();
+                for p in unique_paths {
+                    let id = nanoid!();
 
-        replace_path(&mut text, &p, &id);
+                    replace_path(&mut text, &p, &id);
 
-        let image_data = ImageUploadData {
-            image_url: p,
-            image_fingerprint: id,
-        };
+                    let image_data = ImageUploadData {
+                        image_url: p,
+                        image_fingerprint: id,
+                    };
 
-        let mut fp = FINGERPRINTS.lock().unwrap();
-        fp.push(image_data.clone());
+                    let mut fp = FINGERPRINTS.lock().unwrap();
+                    fp.push(image_data.clone());
 
-        status.imagerequest.push(image_data);
+                    status.imagerequest.push(image_data);
+                }
+
+                let mut post_image: String = "undefined".to_string();
+                if !status.imagerequest.is_empty() {
+                    post_image = status
+                        .imagerequest
+                        .first()
+                        .unwrap()
+                        .image_fingerprint
+                        .clone();
+                }
+
+                tokio::spawn(async move {
+                    db.save_post(meta_data, text.as_str(), post_image.as_str())
+                        .await
+                });
+
+                return HttpResponse::Ok().json(status);
+            }
+        }
     }
 
-    let mut post_image: String = "undefined".to_string();
-    if !status.imagerequest.is_empty() {
-        post_image = status
-            .imagerequest
-            .first()
-            .unwrap()
-            .image_fingerprint
-            .clone();
-    }
-
-    tokio::spawn(async move {
-        db.save_post(meta_data, text.as_str(), post_image.as_str())
-            .await;
-    });
-
-    HttpResponse::Ok().json(status)
+    HttpResponse::Forbidden().finish()
 }
 
 #[post("/upload_image")]
-pub async fn upload_image(_db: web::Data<Database>, data: web::Json<ImageData>) -> impl Responder {
+pub async fn upload_image(
+    req: HttpRequest,
+    db: web::Data<Database>,
+    data: web::Json<ImageData>,
+) -> impl Responder {
     let mut status = "Success".to_string();
 
-    let mut fp = FINGERPRINTS.lock().unwrap();
+    if let Some(auth_header) = req.headers().get(AUTHORIZATION) {
+        if let Ok(auth_str) = auth_header.to_str() {
+            let result = db.is_auth_valid(auth_str).await;
+            if let Ok(true) = result {
+                let mut fp = FINGERPRINTS.lock().unwrap();
 
-    if let Some(index) = fp
-        .iter()
-        .position(|d| d.image_fingerprint == data.fingerprint)
-    {
-        let filename = extract_filename(fp[index].image_url.as_str());
-        fp.remove(index);
+                if let Some(index) = fp
+                    .iter()
+                    .position(|d| d.image_fingerprint == data.fingerprint)
+                {
+                    let filename = extract_filename(fp[index].image_url.as_str());
+                    fp.remove(index);
 
-        tokio::spawn(async move {
-            save_image(data.into_inner(), &filename).await;
-        });
-    } else {
-        status = "Failed".to_string()
+                    tokio::spawn(async move {
+                        save_image(data.into_inner(), &filename).await;
+                    });
+                } else {
+                    status = "Failed".to_string()
+                }
+
+                return HttpResponse::Ok().json(status);
+            }
+        }
     }
 
-    HttpResponse::Ok().json(status)
+    HttpResponse::Forbidden().finish()
 }
 
 fn filter_meta(text: &mut String) -> MetaData {
@@ -189,7 +216,8 @@ async fn save_image(data: ImageData, filename: &str) {
         .map_err(|e| actix_web::error::ErrorInternalServerError(e));
 
     if file.is_ok() && image_data.is_ok() {
-        file.unwrap()
+        let _ = file
+            .unwrap()
             .write_all(&image_data.unwrap())
             .map_err(|e| actix_web::error::ErrorInternalServerError(e));
     }

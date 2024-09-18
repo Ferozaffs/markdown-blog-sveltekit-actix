@@ -13,6 +13,23 @@ async fn main() -> std::io::Result<()> {
     fs::create_dir_all("assets/images").unwrap();
 
     let database = database::Database::new().await;
+    match database.check_api_keys().await {
+        Ok(b) => {
+            if !b {
+                match database.create_api_key().await {
+                    Ok(key) => {
+                        println!("No api key present, generating new key!");
+                        println!("Api key: {}", key);
+                    }
+                    Err(e) => println!("Database error: {}", e),
+                }
+            }
+        }
+        Err(e) => {
+            println!("Database error: {}", e);
+        }
+    };
+
     let app_data = web::Data::new(database);
 
     HttpServer::new(move || {

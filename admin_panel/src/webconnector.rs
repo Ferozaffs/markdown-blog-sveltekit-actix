@@ -1,6 +1,8 @@
 use crate::data;
 
-use reqwest::Client;
+use reqwest::{header, Client};
+
+const API_KEY: &str = "offfdkTJrYwDSRqJzAsuKGgbYzbP6Xe2";
 
 #[tokio::main]
 pub async fn upload_post(
@@ -25,7 +27,8 @@ async fn send_json(url: &str, json_data: &str) -> Result<(), reqwest::Error> {
     let client = Client::new();
     let res = client
         .post(url)
-        .header("Content-Type", "application/json")
+        .header(header::AUTHORIZATION, format!("{}", API_KEY))
+        .header(header::CONTENT_TYPE, "application/json")
         .body(json_data.to_string())
         .send()
         .await?;

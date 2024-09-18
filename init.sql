@@ -1,5 +1,10 @@
 -- Adminer 4.8.1 PostgreSQL 15.3 (Debian 15.3-1.pgdg120+1) dump
 
+DROP TABLE IF EXISTS "keys";
+CREATE TABLE "public"."keys" (
+    "key" text NOT NULL
+);
+
 DROP TABLE IF EXISTS "posts";
 CREATE TABLE "public"."posts" (
     "id" uuid NOT NULL,

@@ -1,8 +1,8 @@
-use bb8::Pool;
+use bb8::{Pool, PooledConnection};
 use bb8_postgres::PostgresConnectionManager;
 use chrono::{DateTime, Utc};
+use rand::{distributions::Alphanumeric, Rng};
 use tokio_postgres::{Error, NoTls, Row};
-use uuid::Uuid;
 
 type ConnectionPool = Pool<PostgresConnectionManager<NoTls>>;
 
@@ -13,6 +13,15 @@ pub struct Database {
 }
 
 impl Database {
+    fn generate_api_key() -> String {
+        let key: String = rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(32)
+            .map(char::from)
+            .collect();
+        key
+    }
+
     pub async fn new() -> Self {
         let database_url = "postgresql://mdAdmin:1337asdf@db:5432/mdDatabase";
 
@@ -27,23 +36,22 @@ impl Database {
         Database { pool }
     }
 
-    pub async fn get_project_categories(&self) -> Result<Vec<Row>, Error> {
-        let connection = self
-            .pool
+    pub async fn get_connection(&self) -> PooledConnection<PostgresConnectionManager<NoTls>> {
+        self.pool
             .get()
             .await
-            .expect("Failed to get a connection from the pool");
+            .expect("Failed to get a connection from the pool")
+    }
+
+    pub async fn get_project_categories(&self) -> Result<Vec<Row>, Error> {
+        let connection = self.get_connection().await;
 
         connection.query("SELECT project_categories.category, project_categories.description FROM project_categories",&[])
         .await
     }
 
     pub async fn get_projects_from_category(&self, category: &str) -> Result<Vec<Row>, Error> {
-        let connection = self
-            .pool
-            .get()
-            .await
-            .expect("Failed to get a connection from the pool");
+        let connection = self.get_connection().await;
 
         let query = format!(
             "SELECT projects.id, projects.name, projects.image, projects.status
@@ -59,45 +67,24 @@ impl Database {
     }
 
     pub async fn get_project_summary(&self, id: &str) -> Result<Vec<Row>, Error> {
-        let connection = self
-            .pool
-            .get()
-            .await
-            .expect("Failed to get a connection from the pool");
+        let connection = self.get_connection().await;
 
-        let query = format!(
-            "SELECT projects.id, projects.name, projects.image, projects.status
-            FROM projects
-            WHERE projects.id='{}'",
-            id
-        );
-
-        connection.query(&query.to_string(), &[]).await
+        connection.query("SELECT projects.id, projects.name, projects.image, projects.status FROM projects WHERE projects.id=$1", &[&id]).await
     }
 
     pub async fn get_project_content(&self, id: &str) -> Result<Vec<Row>, Error> {
-        let connection = self
-            .pool
-            .get()
+        let connection = self.get_connection().await;
+
+        connection
+            .query(
+                "SELECT projects.content FROM projects WHERE projects.id=$1",
+                &[&id],
+            )
             .await
-            .expect("Failed to get a connection from the pool");
-
-        let query = format!(
-            "SELECT projects.content 
-            FROM projects 
-            WHERE projects.id='{}'",
-            id
-        );
-
-        connection.query(&query.to_string(), &[]).await
     }
 
     pub async fn get_posts(&self, tags: Vec<&str>) -> Result<Vec<Row>, Error> {
-        let connection = self
-            .pool
-            .get()
-            .await
-            .expect("Failed to get a connection from the pool");
+        let connection = self.get_connection().await;
 
         let mut query = format!(
             "SELECT 
@@ -129,11 +116,7 @@ impl Database {
     }
 
     pub async fn get_post_summary(&self, id: &str) -> Result<Vec<Row>, Error> {
-        let connection = self
-            .pool
-            .get()
-            .await
-            .expect("Failed to get a connection from the pool");
+        let connection = self.get_connection().await;
 
         let query = format!(
             "SELECT 
@@ -153,11 +136,7 @@ impl Database {
     }
 
     pub async fn get_post_content(&self, id: &str) -> Result<Vec<Row>, Error> {
-        let connection = self
-            .pool
-            .get()
-            .await
-            .expect("Failed to get a connection from the pool");
+        let connection = self.get_connection().await;
 
         let query = format!(
             "SELECT posts.content 
@@ -175,11 +154,7 @@ impl Database {
         markdown: &str,
         image_fingerprint: &str,
     ) -> Result<u64, Error> {
-        let connection = self
-            .pool
-            .get()
-            .await
-            .expect("Failed to get a connection from the pool");
+        let connection = self.get_connection().await;
 
         let query = format!(
             "INSERT INTO posts (id, name, image, project_id, tags, content, date, description)
@@ -202,5 +177,33 @@ impl Database {
                 ],
             )
             .await
+    }
+
+    pub async fn check_api_keys(&self) -> Result<bool, Error> {
+        let connection = self.get_connection().await;
+
+        let result = connection.query("SELECT * FROM keys", &[]).await?;
+        Ok(!result.is_empty())
+    }
+
+    pub async fn create_api_key(&self) -> Result<String, Error> {
+        let connection = self.get_connection().await;
+
+        let key = Database::generate_api_key();
+
+        connection
+            .query("INSERT INTO keys (key) VALUES ($1)", &[&key])
+            .await?;
+        Ok(key)
+    }
+
+    pub async fn is_auth_valid(&self, key: &str) -> Result<bool, Error> {
+        let connection = self.get_connection().await;
+
+        let result = connection
+            .query("SELECT * FROM keys WHERE keys.key=$1", &[&key])
+            .await?;
+
+        Ok(!result.is_empty())
     }
 }
