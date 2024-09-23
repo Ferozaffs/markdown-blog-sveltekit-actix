@@ -12,7 +12,7 @@
                 "args": [
                     "build",
                     "--bin=md_backend",
-                    "--package=markdown-blog-backend"
+                    "--package=md_backend"
                 ],
                 "filter": {
                     "name": "md_backend",

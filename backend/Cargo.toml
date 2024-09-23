@@ -1,5 +1,5 @@
 [package]
-name = "markdown-blog-backend"
+name = "md_backend"
 version = "0.1.0"
 edition = "2021"
 

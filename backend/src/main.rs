@@ -46,6 +46,7 @@ async fn main() -> std::io::Result<()> {
             .service(posts::post_summary)
             .service(posts::post_content)
             .service(uploads::upload_post)
+            .service(uploads::upload_image)
     })
     .bind(("0.0.0.0", 8080))?
     .run()

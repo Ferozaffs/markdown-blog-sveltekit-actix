@@ -98,8 +98,12 @@ pub async fn upload_post(
                 }
 
                 tokio::spawn(async move {
-                    db.save_post(meta_data, text.as_str(), post_image.as_str())
-                        .await
+                    db.save_post(
+                        meta_data,
+                        text.as_str(),
+                        format!("{}.jpg", post_image).as_str(),
+                    )
+                    .await
                 });
 
                 return HttpResponse::Ok().json(status);
@@ -128,11 +132,11 @@ pub async fn upload_image(
                     .iter()
                     .position(|d| d.image_fingerprint == data.fingerprint)
                 {
-                    let filename = extract_filename(fp[index].image_url.as_str());
                     fp.remove(index);
 
+                    let fingerprint = data.fingerprint.clone();
                     tokio::spawn(async move {
-                        save_image(data.into_inner(), &filename).await;
+                        save_image(data.into_inner(), &fingerprint);
                     });
                 } else {
                     status = "Failed".to_string()
@@ -198,7 +202,7 @@ fn replace_path(text: &mut String, path: &String, id: &String) {
 
     let result = re
         .replace_all(text, {
-            let new_url = format!("http://127.0.0.1/images/{}", id);
+            let new_url = format!("http://127.0.0.1/images/{}.jpg", id);
             format!("![{}]({})", extract_filename(path), new_url)
         })
         .to_string();
@@ -207,12 +211,12 @@ fn replace_path(text: &mut String, path: &String, id: &String) {
     text.push_str(result.as_str());
 }
 
-async fn save_image(data: ImageData, filename: &str) {
+fn save_image(data: ImageData, filename: &str) {
     let image_data = BASE64_STANDARD
         .decode(&data.image)
         .map_err(|e| actix_web::error::ErrorInternalServerError(e));
 
-    let file = File::create(format!("./assets/{}", filename))
+    let file = File::create(format!("./assets/images/{}.jpg", filename))
         .map_err(|e| actix_web::error::ErrorInternalServerError(e));
 
     if file.is_ok() && image_data.is_ok() {
