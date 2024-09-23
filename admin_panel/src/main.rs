@@ -42,6 +42,7 @@ struct AdminPanel {
     open_file_dialog: Option<FileDialog>,
     meta_data: Option<data::MetaData>,
     tag_field: String,
+    server_settings: data::ServerSettings,
 }
 
 impl Default for AdminPanel {
@@ -58,6 +59,7 @@ impl Default for AdminPanel {
                 tags: vec![],
             }),
             tag_field: "".to_string(),
+            server_settings: data::load_server_settings(),
         }
     }
 }
@@ -78,10 +80,27 @@ impl eframe::App for AdminPanel {
                     )
                     .expect("Unable to write file");
                 } else if ui.button("Upload").clicked() {
-                    let _ =
-                        webconnector::upload_post(self.markdown.clone(), self.meta_data.clone());
+                    let _ = webconnector::upload_post(
+                        self.markdown.clone(),
+                        self.meta_data.clone(),
+                        &self.server_settings.address,
+                        &self.server_settings.api_token,
+                    );
                 }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                    ui.add(egui::TextEdit::singleline(
+                        &mut self.server_settings.api_token,
+                    ));
+                    ui.label("Api token: ");
+
+                    ui.add(egui::TextEdit::singleline(
+                        &mut self.server_settings.address,
+                    ));
+                    ui.label("Server: ");
+                });
             });
+
+            ui.separator();
 
             let width = ui.available_width();
             let height = ui.available_height();
@@ -93,8 +112,6 @@ impl eframe::App for AdminPanel {
                     .id_source("data")
                     .show(ui, |ui| {
                         ui.vertical(|ui| {
-                            ui.add_sized([width * 0.2, height * 0.1], egui::Label::new("Options"));
-
                             let mut regenerate = false;
                             if let Some(meta_data) = self.meta_data.as_mut() {
                                 ui.label("Title");
@@ -169,6 +186,10 @@ impl eframe::App for AdminPanel {
             });
         });
     }
+
+    fn on_exit(&mut self, _: Option<&eframe::glow::Context>) {
+        data::save_server_settings(&self.server_settings).expect("Failed to save state");
+    }
 }
 
 impl AdminPanel {
@@ -230,7 +251,7 @@ impl AdminPanel {
             }
 
             let image = self.markdown.find("@@IMAGE");
-            if image.is_some() {
+            if image.is_some() && self.file_load_state.is_none() {
                 self.file_load_state = Some(FileLoadState::LoadImage);
             }
 
@@ -266,7 +287,7 @@ impl AdminPanel {
                                 "![@IMAGE]({})",
                                 Some(file.to_path_buf()).unwrap().to_str().unwrap()
                             );
-                            self.markdown = self.markdown.replace("@@IMAGE", &image_md);
+                            self.markdown = self.markdown.replacen("@@IMAGE", &image_md, 1);
                         }
                     }
 

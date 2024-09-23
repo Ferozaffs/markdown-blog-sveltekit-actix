@@ -1,5 +1,5 @@
 [package]
-name = "admin_panel"
+name = "md_admin_panel"
 version = "0.1.0"
 edition = "2021"
 

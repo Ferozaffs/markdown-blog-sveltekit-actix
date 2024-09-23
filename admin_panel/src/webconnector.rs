@@ -8,6 +8,8 @@ const API_KEY: &str = "offfdkTJrYwDSRqJzAsuKGgbYzbP6Xe2";
 pub async fn upload_post(
     markdown: String,
     meta_data: Option<data::MetaData>,
+    server: &str,
+    api_token: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match meta_data {
         Some(_meta) => {
@@ -15,7 +17,8 @@ pub async fn upload_post(
 
             let json_data = serde_json::to_string(&data)?;
 
-            send_json("http://localhost:8080/upload_post", &json_data).await?;
+            let url = format!("http://{}/upload_post", server);
+            send_json(url.as_str(), api_token, &json_data).await?;
 
             Ok(())
         }
@@ -23,11 +26,11 @@ pub async fn upload_post(
     }
 }
 
-async fn send_json(url: &str, json_data: &str) -> Result<(), reqwest::Error> {
+async fn send_json(url: &str, api_token: &str, json_data: &str) -> Result<(), reqwest::Error> {
     let client = Client::new();
     let res = client
         .post(url)
-        .header(header::AUTHORIZATION, format!("{}", API_KEY))
+        .header(header::AUTHORIZATION, format!("{}", api_token))
         .header(header::CONTENT_TYPE, "application/json")
         .body(json_data.to_string())
         .send()
