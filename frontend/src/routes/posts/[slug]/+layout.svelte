@@ -10,7 +10,7 @@
     import { currentTags, currentContent } from '$lib/store.js';
     import { ContentArea } from '$lib/Constants.svelte';
     function gotoPosts(tag: string) {
-        $currentTags = tag;
+        $currentTags = [tag];
         $currentContent = ContentArea.Posts;
         goto("/");
     }
@@ -26,9 +26,11 @@
     </td>
     <td>
         <p class="text-xl text-gray-400">{data.post.title}</p>   
-        <span>Go to project:
-            <button on:click={() => gotoProject(data.project.id)} class="px-1 text-gray-600 hover:text-gray-300 hover:bg-gray-500 hover:rounded-md">{data.project.name}</button>
-        </span>
+        {#if data.project != null}
+            <span>Go to project:
+                <button on:click={() => gotoProject(data.project.id)} class="px-1 text-gray-600 hover:text-gray-300 hover:bg-gray-500 hover:rounded-md">{data.project.name}</button>
+            </span>
+        {/if}
         <span class="px-3"> Tags:          
             {#each data.post.tags.split(",") as tag}
             <button on:click={() => gotoPosts(tag)} class="px-1 text-gray-600 hover:text-gray-300 hover:bg-gray-500 hover:rounded-md">{tag}</button>

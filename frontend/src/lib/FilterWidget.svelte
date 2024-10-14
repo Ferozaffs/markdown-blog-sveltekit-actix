@@ -1,5 +1,5 @@
 <script lang="ts">
-    export let items = [['Item 1', false], ['Item 2', false], ['Item 3', false]];
+    export let items = [];
     export let filterCallback = () => {};
     let visible = false;
 
@@ -8,9 +8,14 @@
     }
 
     export function setItems(newItems: string[]) {
-        items = [];
         for (let i = 0; i < newItems.length; i++) {      
-            items.push([newItems[i], false])
+            const newItem = newItems[i];
+        
+            const exists = items.some(item => item[0] === newItem);
+
+            if (!exists) {
+                items.push([newItem, false]);
+            }
         }
     }
 
@@ -40,9 +45,9 @@
 
 </script>
 
-<button on:click={() => toggleList()} class="w-32 {visible? "border border-gray-800" : ""} text-gray-800 hover:text-gray-400 font-medium rounded-md text-sm px-5 py-2.5 mr-2 mb-2">Filter ▼</button>
+<button on:click={() => toggleList()} class="w-24 {visible? "border border-gray-800" : ""} text-gray-800 hover:text-gray-400 font-medium rounded-md text-sm px-5 py-2.5 mr-2 mb-2">Filter ▼</button>
 {#if visible == true}
-    <div class="w-32 absolute border border-2 border-gray-600 bg-slate-800 rounded-md text-gray-400 text-sm font-medium">
+    <div class="w-24 absolute border border-2 border-gray-600 bg-slate-800 rounded-md text-gray-400 text-sm font-medium">
         {#each items as [item, state]}
             <li class="list-none px-5 py-2.5">
                 <label>

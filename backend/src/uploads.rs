@@ -202,7 +202,7 @@ fn replace_path(text: &mut String, path: &String, id: &String) {
 
     let result = re
         .replace_all(text, {
-            let new_url = format!("http://127.0.0.1/images/{}.jpg", id);
+            let new_url = format!("http://127.0.0.1:8080/images/{}.jpg", id);
             format!("![{}]({})", extract_filename(path), new_url)
         })
         .to_string();

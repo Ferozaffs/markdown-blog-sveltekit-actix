@@ -4,9 +4,9 @@
     export let buttonCallbacks = [() => {}, () => {}]
 </script>
 
-<ul class="p-4 whitespace-nowrap no-scrollbar overflow-x-auto overflow-y-hidden">
+<ul class="p-4 overflow-hidden">
     {#each buttonNames as buttonText, index}
-        <li class="px-2 min-w-24 w-fit inline-block">
+        <li class="md:px-2 md:min-w-24 w-fit inline-block">
             <ButtonDefault text={buttonText} callback={buttonCallbacks[index]}/>
         </li>
     {/each}

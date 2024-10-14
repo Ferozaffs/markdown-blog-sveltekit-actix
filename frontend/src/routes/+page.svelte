@@ -12,14 +12,14 @@
     $: tags && loadTags();
     $: $currentTags && updateFilter();
 
-    function loadTags() {     
+    function loadTags() {    
         if (filterWidget !== null)
         {
             filterWidget.setItems(tags);
         }
     }
 
-    function filterTags() {
+    function filterTags() {  
         if (filterWidget !== null)
         {
             let items = filterWidget.getActiveItems();
@@ -58,11 +58,11 @@
     <div class="bg-gray-600">
     <table class="w-full table-fixed">
         <tr>
-        <td class="w-1/6"/>
+        <td class="md:w-1/6 w-1/12"/>
         <td class="flex h-fit justify-center">
             <ButtonRow buttonNames={['Posts', 'Projects', 'About']} buttonCallbacks={[showArticles, showProjects, showAbout]} />
         </td>
-        <td class="w-1/6">
+        <td class="md:w-1/6 w-1/5">
             {#if $currentContent === ContentArea.Posts}
                 <FilterWidget filterCallback={filterTags} bind:this="{filterWidget}"/>
             {/if}
