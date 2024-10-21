@@ -38,7 +38,7 @@ pub async fn upload_post(
 
             let json_data = serde_json::to_string(&data)?;
 
-            let mut url = format!("http://{}/upload_post", server);
+            let url = format!("http://{}/upload_post", server);
             let res = send_json(url.as_str(), api_token, &json_data).await;
             match res {
                 Ok(r) => {
@@ -47,7 +47,7 @@ pub async fn upload_post(
                         let body = r.text().await?;
                         let json_res: PostResponse = serde_json::from_str(&body).unwrap();
 
-                        let mut url = format!("http://{}/upload_image", server);
+                        let url = format!("http://{}/upload_image", server);
                         for i in json_res.imagerequest.iter() {
                             send_json(url.as_str(), api_token, get_image_data(i).as_str()).await?;
                         }

@@ -159,27 +159,52 @@ impl Database {
     ) -> Result<u64, Error> {
         let connection = self.get_connection().await;
 
-        let query = format!(
-            "INSERT INTO posts (id, name, image, project_id, tags, content, date, description)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
-        );
+        let query: String;
+        if md.post_type == 0 {
+            query = format!(
+                "INSERT INTO projects (id, name, image, status, category_id, content)
+                VALUES ($1, $2, $3, $4, $5, $6)"
+            );
 
-        let now: DateTime<Utc> = Utc::now();
-        connection
-            .execute(
-                &query,
-                &[
-                    &md.fingerprint,
-                    &md.title,
-                    &image_fingerprint,
-                    &md.project_id,
-                    &md.tags,
-                    &markdown,
-                    &now.naive_utc().date(),
-                    &md.description,
-                ],
-            )
-            .await
+            let status = 0;
+            let category = uuid::Uuid::nil();
+
+            connection
+                .execute(
+                    &query,
+                    &[
+                        &md.id,
+                        &md.title,
+                        &image_fingerprint,
+                        &status,
+                        &category,
+                        &markdown,
+                    ],
+                )
+                .await
+        } else {
+            query = format!(
+                "INSERT INTO posts (id, name, image, project_id, tags, content, date, description)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
+            );
+
+            let now: DateTime<Utc> = Utc::now();
+            connection
+                .execute(
+                    &query,
+                    &[
+                        &md.id,
+                        &md.title,
+                        &image_fingerprint,
+                        &md.project,
+                        &md.tags,
+                        &markdown,
+                        &now.naive_utc().date(),
+                        &md.description,
+                    ],
+                )
+                .await
+        }
     }
 
     pub async fn check_api_keys(&self) -> Result<bool, Error> {

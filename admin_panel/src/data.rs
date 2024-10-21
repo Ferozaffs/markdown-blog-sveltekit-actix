@@ -4,7 +4,11 @@ use std::io::{self, Read, Write};
 
 #[derive(Clone)]
 pub struct MetaData {
+    pub id: uuid::Uuid,
     pub title: String,
+    pub description: String,
+    pub post_type: usize,
+    pub project: uuid::Uuid,
     pub tags: Vec<String>,
 }
 

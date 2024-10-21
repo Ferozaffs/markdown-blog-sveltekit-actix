@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write;
+use std::str::FromStr;
 use std::sync::Mutex;
 use uuid::Uuid;
 
@@ -31,9 +32,10 @@ struct PostResponse {
 }
 
 pub struct MetaData {
-    pub fingerprint: Uuid,
-    pub project_id: Uuid,
+    pub id: Uuid,
+    pub project: Uuid,
     pub title: String,
+    pub post_type: usize,
     pub tags: String,
     pub description: String,
 }
@@ -152,8 +154,9 @@ pub async fn upload_image(
 
 fn filter_meta(text: &mut String) -> MetaData {
     let mut meta_data = MetaData {
-        fingerprint: Uuid::new_v4(),
-        project_id: Uuid::nil(),
+        id: Uuid::new_v4(),
+        project: Uuid::nil(),
+        post_type: 0,
         title: String::new(),
         tags: String::new(),
         description: String::new(),
@@ -165,12 +168,36 @@ fn filter_meta(text: &mut String) -> MetaData {
             break;
         }
 
-        if let Some(data) = line.strip_prefix("@TITLE: ") {
+        if let Some(data) = line.strip_prefix("@ID: ") {
+            match uuid::Uuid::from_str(data.trim().to_string().as_str()) {
+                Ok(v) => {
+                    if v != uuid::Uuid::nil() {
+                        meta_data.id = v
+                    }
+                }
+                Err(_) => (),
+            }
+        } else if let Some(data) = line.strip_prefix("@TYPE: ") {
+            match data.trim().to_string().parse::<usize>() {
+                Ok(v) => meta_data.post_type = v,
+                Err(_) => (),
+            }
+        } else if let Some(data) = line.strip_prefix("@PROJECT: ") {
+            match uuid::Uuid::from_str(data.trim().to_string().as_str()) {
+                Ok(v) => {
+                    if meta_data.post_type == 0 {
+                        meta_data.project = v
+                    }
+                }
+                Err(_) => (),
+            }
+        } else if let Some(data) = line.strip_prefix("@TITLE: ") {
             meta_data.title = data.trim().to_string();
+        } else if let Some(data) = line.strip_prefix("@DESCRIPTION: ") {
+            meta_data.description = data.trim().to_string();
         } else if let Some(data) = line.strip_prefix("@TAGS: ") {
             meta_data.tags = data.trim().to_string();
         }
-
         count += 1;
     }
 
