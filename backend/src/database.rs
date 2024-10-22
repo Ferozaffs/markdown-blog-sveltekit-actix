@@ -2,11 +2,10 @@ use bb8::{Pool, PooledConnection};
 use bb8_postgres::PostgresConnectionManager;
 use chrono::{DateTime, Utc};
 use rand::{distributions::Alphanumeric, Rng};
+use shared::MetaData;
 use tokio_postgres::{Error, NoTls, Row};
 
 type ConnectionPool = Pool<PostgresConnectionManager<NoTls>>;
-
-use crate::uploads::MetaData;
 
 pub struct Database {
     pool: ConnectionPool,

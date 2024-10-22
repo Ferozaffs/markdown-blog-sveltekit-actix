@@ -1,7 +1,7 @@
-use crate::data;
+use crate::data::{self, ServerContentSummary};
 
 use base64::prelude::*;
-use reqwest::{header, Client, Response};
+use reqwest::{blocking::get, header, Client, Response};
 use serde::{Deserialize, Serialize};
 use std::fs;
 
@@ -25,10 +25,9 @@ struct ImageData {
     image: String,
 }
 
-#[tokio::main]
 pub async fn upload_post(
     markdown: String,
-    meta_data: Option<data::MetaData>,
+    meta_data: Option<shared::MetaData>,
     server: &str,
     api_token: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -88,4 +87,26 @@ fn get_image_data(img: &ImageUploadData) -> String {
     };
 
     serde_json::to_string(&image_data).unwrap()
+}
+
+pub fn load_content_summary(server: &str) -> data::ServerContentSummary {
+    let mut server_content_summary = ServerContentSummary::default();
+
+    match get(format!("http://{}/projectoverview", server)) {
+        Ok(res) => match res.json::<shared::ProjectOverview>() {
+            Ok(v) => server_content_summary.projects = v,
+            Err(_) => (),
+        },
+        Err(_) => (),
+    }
+
+    match get(format!("http://{}/posts/*", server)) {
+        Ok(res) => match res.json::<Vec<shared::PostSummary>>() {
+            Ok(v) => server_content_summary.posts = v,
+            Err(_) => (),
+        },
+        Err(_) => (),
+    }
+
+    return server_content_summary;
 }

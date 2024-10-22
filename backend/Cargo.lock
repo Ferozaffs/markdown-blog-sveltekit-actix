@@ -1019,6 +1019,7 @@ dependencies = [
  "rand",
  "regex",
  "serde",
+ "shared",
  "tokio",
  "tokio-postgres",
  "uuid",
@@ -1441,6 +1442,14 @@ dependencies = [
  "cfg-if",
  "cpufeatures",
  "digest",
+]
+
+[[package]]
+name = "shared"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "uuid",
 ]
 
 [[package]]

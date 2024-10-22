@@ -5,6 +5,7 @@ pub mod webconnector;
 
 use std::{fs, str::FromStr};
 
+use data::ServerContentSummary;
 use eframe::egui;
 use egui_commonmark::{CommonMarkCache, CommonMarkViewer};
 use egui_file::FileDialog;
@@ -12,6 +13,9 @@ use regex::Regex;
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init();
+
+    let mut admin_panel = AdminPanel::default();
+    admin_panel.get_server_content_summary();
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default().with_inner_size([1280.0, 720.0]),
@@ -24,7 +28,7 @@ fn main() -> Result<(), eframe::Error> {
             // This gives us image support:
             egui_extras::install_image_loaders(&cc.egui_ctx);
 
-            Ok(Box::new(AdminPanel::default()))
+            Ok(Box::new(admin_panel))
         }),
     )
 }
@@ -41,9 +45,10 @@ struct AdminPanel {
     cache: CommonMarkCache,
     file_load_state: Option<FileLoadState>,
     open_file_dialog: Option<FileDialog>,
-    meta_data: Option<data::MetaData>,
+    meta_data: Option<shared::MetaData>,
     tag_field: String,
     server_settings: data::ServerSettings,
+    server_content_summary: data::ServerContentSummary,
 }
 
 impl Default for AdminPanel {
@@ -55,7 +60,7 @@ impl Default for AdminPanel {
             opened_markdown_file: "".to_string(),
             file_load_state: None,
             open_file_dialog: None,
-            meta_data: Some(data::MetaData {
+            meta_data: Some(shared::MetaData {
                 id: uuid::Uuid::nil(),
                 title: String::from(""),
                 description: String::from(""),
@@ -65,6 +70,7 @@ impl Default for AdminPanel {
             }),
             tag_field: "".to_string(),
             server_settings: data::load_server_settings(),
+            server_content_summary: ServerContentSummary::default(),
         }
     }
 }
@@ -94,6 +100,9 @@ impl eframe::App for AdminPanel {
                     );
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                    if ui.button("Sync").clicked() {
+                        self.get_server_content_summary();
+                    }
                     ui.add(egui::TextEdit::singleline(
                         &mut self.server_settings.api_token,
                     ));
@@ -362,5 +371,10 @@ impl AdminPanel {
                 }
             }
         }
+    }
+
+    fn get_server_content_summary(&mut self) {
+        self.server_content_summary =
+            webconnector::load_content_summary(self.server_settings.address.as_str());
     }
 }

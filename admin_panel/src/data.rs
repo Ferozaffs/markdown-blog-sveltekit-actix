@@ -1,15 +1,21 @@
 use serde::{Deserialize, Serialize};
+use shared;
 use std::fs::File;
 use std::io::{self, Read, Write};
 
-#[derive(Clone)]
-pub struct MetaData {
-    pub id: uuid::Uuid,
-    pub title: String,
-    pub description: String,
-    pub post_type: usize,
-    pub project: uuid::Uuid,
-    pub tags: Vec<String>,
+#[derive(Debug)]
+pub struct ServerContentSummary {
+    pub posts: Vec<shared::PostSummary>,
+    pub projects: shared::ProjectOverview,
+}
+
+impl Default for ServerContentSummary {
+    fn default() -> Self {
+        ServerContentSummary {
+            posts: vec![],
+            projects: shared::ProjectOverview { categories: vec![] },
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]

@@ -1,19 +1,7 @@
-use actix_web::{get, web, Responder, Result, HttpRequest, HttpResponse};
-use actix_web::http::header::ContentType;
-use serde::Serialize;
-use uuid::Uuid;
 use crate::database::Database;
-
-#[derive(Serialize, Debug)]
-struct PostSummary {
-    id: Uuid,
-    title: String,
-    image: String,
-    date: String,
-    description: String,
-    tags: String,
-    project_id: Uuid
-}
+use actix_web::http::header::ContentType;
+use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Result};
+use shared;
 
 #[get("/posts/{tags}")]
 async fn posts(db: web::Data<Database>, req: HttpRequest) -> Result<impl Responder> {
@@ -28,7 +16,7 @@ async fn posts(db: web::Data<Database>, req: HttpRequest) -> Result<impl Respond
 
     let mut posts = Vec::new();
     for row in result.unwrap() {
-        let post = PostSummary {
+        let post = shared::PostSummary {
             id: row.get(0),
             title: row.get(1),
             image: row.get(2),
@@ -62,7 +50,7 @@ async fn post_summary(db: web::Data<Database>, req: HttpRequest) -> Result<impl 
     let result = db.get_post_summary(&id).await;
     let row = result.unwrap();
     let data = row.get(0).unwrap();
-    let post = PostSummary {
+    let post = shared::PostSummary {
         id: data.get(0),
         title: data.get(1),
         image: data.get(2),

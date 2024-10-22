@@ -31,15 +31,6 @@ struct PostResponse {
     imagerequest: Vec<ImageUploadData>,
 }
 
-pub struct MetaData {
-    pub id: Uuid,
-    pub project: Uuid,
-    pub title: String,
-    pub post_type: usize,
-    pub tags: String,
-    pub description: String,
-}
-
 lazy_static! {
     static ref FINGERPRINTS: Mutex<Vec<ImageUploadData>> = {
         let fingerprints = Vec::new();
@@ -152,13 +143,13 @@ pub async fn upload_image(
     HttpResponse::Forbidden().finish()
 }
 
-fn filter_meta(text: &mut String) -> MetaData {
-    let mut meta_data = MetaData {
+fn filter_meta(text: &mut String) -> shared::MetaData {
+    let mut meta_data = shared::MetaData {
         id: Uuid::new_v4(),
         project: Uuid::nil(),
         post_type: 0,
         title: String::new(),
-        tags: String::new(),
+        tags: vec![],
         description: String::new(),
     };
 
@@ -196,7 +187,7 @@ fn filter_meta(text: &mut String) -> MetaData {
         } else if let Some(data) = line.strip_prefix("@DESCRIPTION: ") {
             meta_data.description = data.trim().to_string();
         } else if let Some(data) = line.strip_prefix("@TAGS: ") {
-            meta_data.tags = data.trim().to_string();
+            meta_data.tags = data.trim().split(',').map(|s| s.to_string()).collect();
         }
         count += 1;
     }
