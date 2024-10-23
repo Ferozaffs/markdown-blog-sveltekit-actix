@@ -1019,6 +1019,7 @@ dependencies = [
  "rand",
  "regex",
  "serde",
+ "serde_json",
  "shared",
  "tokio",
  "tokio-postgres",

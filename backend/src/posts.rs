@@ -35,30 +35,23 @@ async fn posts(db: web::Data<Database>, req: HttpRequest) -> Result<impl Respond
 #[get("/postcontent/{id}")]
 async fn post_content(db: web::Data<Database>, req: HttpRequest) -> Result<impl Responder> {
     let id: String = req.match_info().query("id").parse().unwrap();
-    let result = db.get_post_content(&id).await;
-    let content: String = result.unwrap().get(0).unwrap().get(0);
-
-    Ok(HttpResponse::Ok()
-        .content_type(ContentType::plaintext())
-        .insert_header(("X-Hdr", "sample"))
-        .body(content))
+    match db.get_post_content(&id).await {
+        Ok(content) => Ok(HttpResponse::Ok().body(content)),
+        Err(_) => Ok(HttpResponse::BadRequest().body("Bad request")),
+    }
 }
 
 #[get("/postsummary/{id}")]
 async fn post_summary(db: web::Data<Database>, req: HttpRequest) -> Result<impl Responder> {
     let id: String = req.match_info().query("id").parse().unwrap();
-    let result = db.get_post_summary(&id).await;
-    let row = result.unwrap();
-    let data = row.get(0).unwrap();
-    let post = shared::PostSummary {
-        id: data.get(0),
-        title: data.get(1),
-        image: data.get(2),
-        date: data.get(3),
-        description: data.get(4),
-        tags: data.get(5),
-        project_id: data.get(6),
-    };
-
-    Ok(web::Json(post))
+    match db.get_post_summary(&id).await {
+        Ok(post) => Ok(web::Json(serde_json::to_value(&post).unwrap())),
+        Err(_) => {
+            let error_response = serde_json::json!({
+                "error": "Bad request",
+                "message": "Unable to fetch the post summary."
+            });
+            Ok(web::Json(error_response))
+        }
+    }
 }

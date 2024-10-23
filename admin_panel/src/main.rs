@@ -10,6 +10,8 @@ use eframe::egui;
 use egui_commonmark::{CommonMarkCache, CommonMarkViewer};
 use egui_file::FileDialog;
 use regex::Regex;
+use shared;
+use uuid::Uuid;
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init();
@@ -47,6 +49,9 @@ struct AdminPanel {
     open_file_dialog: Option<FileDialog>,
     meta_data: Option<shared::MetaData>,
     tag_field: String,
+    selected_download_post: shared::PostSummary,
+    selected_download_project: shared::ProjectSummary,
+    selected_upload_project: shared::ProjectSummary,
     server_settings: data::ServerSettings,
     server_content_summary: data::ServerContentSummary,
 }
@@ -60,15 +65,11 @@ impl Default for AdminPanel {
             opened_markdown_file: "".to_string(),
             file_load_state: None,
             open_file_dialog: None,
-            meta_data: Some(shared::MetaData {
-                id: uuid::Uuid::nil(),
-                title: String::from(""),
-                description: String::from(""),
-                post_type: 0,
-                project: uuid::Uuid::nil(),
-                tags: vec![],
-            }),
+            meta_data: Some(shared::MetaData::default()),
             tag_field: "".to_string(),
+            selected_download_post: shared::PostSummary::default(),
+            selected_download_project: shared::ProjectSummary::default(),
+            selected_upload_project: shared::ProjectSummary::default(),
             server_settings: data::load_server_settings(),
             server_content_summary: ServerContentSummary::default(),
         }
@@ -81,6 +82,9 @@ impl eframe::App for AdminPanel {
         self.file_dialog_handler(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
+            let width = ui.available_width();
+            let height = ui.available_height();
+
             ui.horizontal(|ui| {
                 if ui.button("Load").clicked() {
                     self.file_load_state = Some(FileLoadState::LoadMarkdown);
@@ -99,26 +103,62 @@ impl eframe::App for AdminPanel {
                         &self.server_settings.api_token,
                     );
                 }
+                ui.label("Posts");
+                egui::ComboBox::from_id_salt("Download posts combo")
+                    .selected_text(&self.selected_download_post.title)
+                    .show_ui(ui, |ui| {
+                        // Add items to the ComboBox
+                        for option in &self.server_content_summary.posts {
+                            let response = ui.selectable_value(
+                                &mut self.selected_download_post,
+                                option.clone(),
+                                option.title.as_str(),
+                            );
+                            if response.changed() {
+                                self.selected_download_project = shared::ProjectSummary::default();
+                            }
+                        }
+                    });
+                ui.label("Projects");
+                egui::ComboBox::from_id_salt("Download projects combo")
+                    .selected_text(&self.selected_download_project.name)
+                    .show_ui(ui, |ui| {
+                        // Add items to the ComboBox
+                        for option in &self.server_content_summary.projects {
+                            let response = ui.selectable_value(
+                                &mut self.selected_download_project,
+                                option.clone(),
+                                option.name.as_str(),
+                            );
+                            if response.changed() {
+                                self.selected_download_post = shared::PostSummary::default();
+                            }
+                        }
+                    });
+
+                if ui.button("Download").clicked() {
+                    self.download_markdown();
+                }
+
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
                     if ui.button("Sync").clicked() {
                         self.get_server_content_summary();
                     }
-                    ui.add(egui::TextEdit::singleline(
-                        &mut self.server_settings.api_token,
-                    ));
+                    ui.add_sized(
+                        [width * 0.15, 5.0],
+                        egui::TextEdit::singleline(&mut self.server_settings.api_token),
+                    );
                     ui.label("Api token: ");
 
-                    ui.add(egui::TextEdit::singleline(
-                        &mut self.server_settings.address,
-                    ));
+                    ui.add_sized(
+                        [width * 0.15, 5.0],
+                        egui::TextEdit::singleline(&mut self.server_settings.address),
+                    );
                     ui.label("Server: ");
                 });
             });
 
             ui.separator();
-
-            let width = ui.available_width();
-            let height = ui.available_height();
 
             ui.horizontal(|ui| {
                 ui.set_min_height(height);
@@ -146,18 +186,33 @@ impl eframe::App for AdminPanel {
                                 let response =
                                     ui.radio_value(&mut meta_data.post_type, index, *option);
                                 if response.changed() {
+                                    if meta_data.post_type == 1 {
+                                        meta_data.project = uuid::Uuid::nil();
+                                        self.selected_upload_project =
+                                            shared::ProjectSummary::default();
+                                    }
                                     regenerate = true;
                                 }
                             }
 
                             if meta_data.post_type == 0 {
                                 ui.label("Project");
-                                let response = ui.add(egui::TextEdit::singleline(
-                                    &mut meta_data.project.to_string(),
-                                ));
-                                if response.changed() {
-                                    regenerate = true;
-                                }
+                                egui::ComboBox::from_id_salt("Project combo")
+                                    .selected_text(&self.selected_upload_project.name)
+                                    .show_ui(ui, |ui| {
+                                        // Add items to the ComboBox
+                                        for option in &self.server_content_summary.projects {
+                                            let response = ui.selectable_value(
+                                                &mut self.selected_upload_project,
+                                                option.clone(),
+                                                option.name.as_str(),
+                                            );
+                                            if response.changed() {
+                                                meta_data.project = self.selected_upload_project.id;
+                                                regenerate = true;
+                                            }
+                                        }
+                                    });
                             }
 
                             ui.label("Tags");
@@ -376,5 +431,18 @@ impl AdminPanel {
     fn get_server_content_summary(&mut self) {
         self.server_content_summary =
             webconnector::load_content_summary(self.server_settings.address.as_str());
+    }
+
+    fn download_markdown(&mut self) {
+        let mut id = uuid::Uuid::nil();
+        if self.selected_download_post.title.is_empty() == false {
+            id = self.selected_download_post.id
+        } else if self.selected_download_project.name.is_empty() == false {
+            id = self.selected_download_project.id
+        }
+        let markdown = webconnector::get_markdown(id);
+
+        let meta_data = self.markdown.find("@META");
+        self.load_meta_data(meta_data.is_some())
     }
 }

@@ -1,8 +1,8 @@
-use actix_web::{get, web, Responder, Result, HttpRequest, HttpResponse};
+use crate::database::Database;
 use actix_web::http::header::ContentType;
+use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Result};
 use serde::Serialize;
 use uuid::Uuid;
-use crate::database::Database;
 
 #[derive(Serialize, Debug)]
 struct ProjectSummary {
@@ -16,30 +16,30 @@ struct ProjectSummary {
 struct ProjectCategory {
     title: String,
     description: String,
-    children: Vec<ProjectSummary>
+    children: Vec<ProjectSummary>,
 }
 
 #[derive(Serialize, Debug)]
 pub struct ProjectOverview {
-    categories: Vec<ProjectCategory>
+    categories: Vec<ProjectCategory>,
 }
 
 pub fn create_test_overview() -> ProjectOverview {
-    let ps = ProjectSummary{
+    let ps = ProjectSummary {
         id: Uuid::parse_str("1e33f43d-0193-460a-9128-bffb1d12e57c").unwrap(),
         name: String::from("TestName"),
         image: String::from("TestImage.jpg"),
-        status: 0
+        status: 0,
     };
 
     let pc = ProjectCategory {
         title: String::from("TestTitle"),
         description: String::from("TestDescription"),
-        children: Vec::from([ps])
+        children: Vec::from([ps]),
     };
 
     let po = ProjectOverview {
-        categories: Vec::from([pc])
+        categories: Vec::from([pc]),
     };
 
     return po;
@@ -47,17 +47,16 @@ pub fn create_test_overview() -> ProjectOverview {
 
 #[get("/projectoverview")]
 async fn project_overview(db: web::Data<Database>) -> Result<impl Responder> {
-    let mut overview = ProjectOverview{
-        categories: Vec::new()
+    let mut overview = ProjectOverview {
+        categories: Vec::new(),
     };
-        
-    
+
     let result = db.get_project_categories().await;
     for row in result.unwrap() {
         let mut category = ProjectCategory {
             title: row.get(0),
             description: row.get(1),
-            children: Vec::new()
+            children: Vec::new(),
         };
 
         let result = db.get_projects_from_category(&category.title).await;
@@ -66,7 +65,7 @@ async fn project_overview(db: web::Data<Database>) -> Result<impl Responder> {
                 id: row.get(0),
                 name: row.get(1),
                 image: row.get(2),
-                status: row.get(3)
+                status: row.get(3),
             };
 
             category.children.push(project);
@@ -81,30 +80,23 @@ async fn project_overview(db: web::Data<Database>) -> Result<impl Responder> {
 #[get("/projectcontent/{id}")]
 async fn project_content(db: web::Data<Database>, req: HttpRequest) -> Result<impl Responder> {
     let id: String = req.match_info().query("id").parse().unwrap();
-    let result = db.get_project_content(&id).await;
-    let content: String = result.unwrap().get(0).unwrap().get(0);
-
-    Ok(HttpResponse::Ok()
-        .content_type(ContentType::plaintext())
-        .insert_header(("X-Hdr", "sample"))
-        .body(content))
+    match db.get_project_content(&id).await {
+        Ok(content) => Ok(HttpResponse::Ok().body(content)),
+        Err(_) => Ok(HttpResponse::BadRequest().body("Bad request")),
+    }
 }
 
 #[get("/projectsummary/{id}")]
 async fn project_summary(db: web::Data<Database>, req: HttpRequest) -> Result<impl Responder> {
     let id: String = req.match_info().query("id").parse().unwrap();
-    let result = db.get_project_summary(&id).await;
-    let row = result.unwrap();
-    let data = row.get(0).unwrap();
-    let summary = ProjectSummary {
-        id: data.get(0),
-        name: data.get(1),
-        image: data.get(2),
-        status: data.get(3)
-    };
-
-    Ok(web::Json(summary))
+    match db.get_project_summary(&id).await {
+        Ok(project) => Ok(web::Json(serde_json::to_value(&project).unwrap())),
+        Err(_) => {
+            let error_response = serde_json::json!({
+                "error": "Bad request",
+                "message": "Unable to fetch the post summary."
+            });
+            Ok(web::Json(error_response))
+        }
+    }
 }
- 
-
-

@@ -6,14 +6,14 @@ use std::io::{self, Read, Write};
 #[derive(Debug)]
 pub struct ServerContentSummary {
     pub posts: Vec<shared::PostSummary>,
-    pub projects: shared::ProjectOverview,
+    pub projects: Vec<shared::ProjectSummary>,
 }
 
 impl Default for ServerContentSummary {
     fn default() -> Self {
         ServerContentSummary {
             posts: vec![],
-            projects: shared::ProjectOverview { categories: vec![] },
+            projects: vec![],
         }
     }
 }

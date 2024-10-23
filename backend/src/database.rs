@@ -68,21 +68,39 @@ impl Database {
         connection.query(&query.to_string(), &[]).await
     }
 
-    pub async fn get_project_summary(&self, id: &str) -> Result<Vec<Row>, Error> {
+    pub async fn get_project_summary(&self, id: &str) -> Result<shared::ProjectSummary, Error> {
         let connection = self.get_connection().await;
 
-        connection.query("SELECT projects.id, projects.name, projects.image, projects.status FROM projects WHERE projects.id=$1", &[&id]).await
+        match connection.query("SELECT projects.id, projects.name, projects.image, projects.status FROM projects WHERE projects.id=$1", &[&id]).await {
+            Ok(row) => match row.get(0) {
+                Some(data) => Ok(shared::ProjectSummary {
+                    id: data.get(0),
+                    name: data.get(1),
+                    image: data.get(2),
+                    status: data.get(3),
+                }),
+                None => Ok(shared::ProjectSummary::default()),
+            },
+            Err(e) => Err(e),
+        }
     }
 
-    pub async fn get_project_content(&self, id: &str) -> Result<Vec<Row>, Error> {
+    pub async fn get_project_content(&self, id: &str) -> Result<String, Error> {
         let connection = self.get_connection().await;
 
-        connection
+        match connection
             .query(
                 "SELECT projects.content FROM projects WHERE projects.id=$1",
                 &[&id],
             )
             .await
+        {
+            Ok(row) => match row.get(0) {
+                Some(content) => Ok(content.get(0)),
+                None => Ok(String::from("")),
+            },
+            Err(_) => Ok(String::from("")),
+        }
     }
 
     pub async fn get_posts(&self, tags: Vec<&str>) -> Result<Vec<Row>, Error> {
@@ -117,7 +135,7 @@ impl Database {
         connection.query(&query.to_string(), &[]).await
     }
 
-    pub async fn get_post_summary(&self, id: &str) -> Result<Vec<Row>, Error> {
+    pub async fn get_post_summary(&self, id: &str) -> Result<shared::PostSummary, Error> {
         let connection = self.get_connection().await;
 
         let query = format!(
@@ -134,10 +152,24 @@ impl Database {
             id
         );
 
-        connection.query(&query.to_string(), &[]).await
+        match connection.query(&query.to_string(), &[]).await {
+            Ok(row) => match row.get(0) {
+                Some(data) => Ok(shared::PostSummary {
+                    id: data.get(0),
+                    title: data.get(1),
+                    image: data.get(2),
+                    date: data.get(3),
+                    description: data.get(4),
+                    tags: data.get(5),
+                    project_id: data.get(6),
+                }),
+                None => Ok(shared::PostSummary::default()),
+            },
+            Err(e) => Err(e),
+        }
     }
 
-    pub async fn get_post_content(&self, id: &str) -> Result<Vec<Row>, Error> {
+    pub async fn get_post_content(&self, id: &str) -> Result<String, Error> {
         let connection = self.get_connection().await;
 
         let query = format!(
@@ -147,7 +179,13 @@ impl Database {
             id
         );
 
-        connection.query(&query.to_string(), &[]).await
+        match connection.query(&query.to_string(), &[]).await {
+            Ok(row) => match row.get(0) {
+                Some(content) => Ok(content.get(0)),
+                None => Ok(String::from("")),
+            },
+            Err(_) => Ok(String::from("")),
+        }
     }
 
     pub async fn save_post(

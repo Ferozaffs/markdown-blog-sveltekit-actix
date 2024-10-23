@@ -42,6 +42,7 @@ async fn main() -> std::io::Result<()> {
             .service(projects::project_content)
             .service(projects::project_summary)
             .service(media::get_image)
+            .service(media::get_markdown)
             .service(posts::posts)
             .service(posts::post_summary)
             .service(posts::post_content)

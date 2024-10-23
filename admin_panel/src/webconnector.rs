@@ -92,12 +92,21 @@ fn get_image_data(img: &ImageUploadData) -> String {
 pub fn load_content_summary(server: &str) -> data::ServerContentSummary {
     let mut server_content_summary = ServerContentSummary::default();
 
+    let mut project_overview: Option<shared::ProjectOverview> = None;
     match get(format!("http://{}/projectoverview", server)) {
         Ok(res) => match res.json::<shared::ProjectOverview>() {
-            Ok(v) => server_content_summary.projects = v,
+            Ok(v) => project_overview = Some(v),
             Err(_) => (),
         },
         Err(_) => (),
+    }
+
+    if project_overview.is_some() {
+        for category in project_overview.unwrap().categories.iter() {
+            for project in category.children.iter() {
+                server_content_summary.projects.push(project.clone());
+            }
+        }
     }
 
     match get(format!("http://{}/posts/*", server)) {
@@ -109,4 +118,11 @@ pub fn load_content_summary(server: &str) -> data::ServerContentSummary {
     }
 
     return server_content_summary;
+}
+
+pub fn get_markdown(server: &str, id: uuid::Uuid) -> String {
+    match get(format!("http://{}/markdown/{}", server, id.to_string())) {
+        Ok(res) => res.text().unwrap(),
+        Err(_) => String::from(""),
+    }
 }
