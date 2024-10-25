@@ -1,7 +1,7 @@
 use crate::data::{self, ServerContentSummary};
 
 use base64::prelude::*;
-use reqwest::{blocking::get, header, Client, Response};
+use reqwest::{blocking, blocking::get, blocking::Client, header};
 use serde::{Deserialize, Serialize};
 use std::fs;
 
@@ -25,47 +25,41 @@ struct ImageData {
     image: String,
 }
 
-pub async fn upload_post(
+pub fn upload_post(
     markdown: String,
-    meta_data: Option<shared::MetaData>,
     server: &str,
     api_token: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    match meta_data {
-        Some(_meta) => {
-            let data = markdown;
+    let data = markdown;
 
-            let json_data = serde_json::to_string(&data)?;
+    let json_data = serde_json::to_string(&data)?;
 
-            let url = format!("http://{}/upload_post", server);
-            let res = send_json(url.as_str(), api_token, &json_data).await;
-            match res {
-                Ok(r) => {
-                    println!("Status: {}", r.status());
-                    if r.status().is_success() {
-                        let body = r.text().await?;
-                        let json_res: PostResponse = serde_json::from_str(&body).unwrap();
+    let url = format!("http://{}/upload_post", server);
+    let res = send_json(url.as_str(), api_token, &json_data);
+    match res {
+        Ok(r) => {
+            println!("Status: {}", r.status());
+            if r.status().is_success() {
+                let body = r.text().unwrap();
+                let json_res: PostResponse = serde_json::from_str(&body).unwrap();
 
-                        let url = format!("http://{}/upload_image", server);
-                        for i in json_res.imagerequest.iter() {
-                            send_json(url.as_str(), api_token, get_image_data(i).as_str()).await?;
-                        }
-                    }
+                let url = format!("http://{}/upload_image", server);
+                for i in json_res.imagerequest.iter() {
+                    let _ = send_json(url.as_str(), api_token, get_image_data(i).as_str());
                 }
-                Err(e) => println!("Upload error: {}", e),
             }
-
-            Ok(())
         }
-        None => Err("Missing meta data!")?,
+        Err(e) => println!("Upload error: {}", e),
     }
+
+    Ok(())
 }
 
-async fn send_json(
+fn send_json(
     url: &str,
     api_token: &str,
     json_data: &str,
-) -> Result<Response, reqwest::Error> {
+) -> Result<blocking::Response, reqwest::Error> {
     let client = Client::new();
     client
         .post(url)
@@ -73,7 +67,6 @@ async fn send_json(
         .header(header::CONTENT_TYPE, "application/json")
         .body(json_data.to_string())
         .send()
-        .await
 }
 
 fn get_image_data(img: &ImageUploadData) -> String {

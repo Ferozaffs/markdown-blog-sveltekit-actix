@@ -28,7 +28,7 @@
         <p class="text-xl text-gray-400">{data.post.title}</p>   
         {#if data.project != null}
             <span>Go to project:
-                <button on:click={() => gotoProject(data.project.id)} class="px-1 text-gray-600 hover:text-gray-300 hover:bg-gray-500 hover:rounded-md">{data.project.name}</button>
+                <button on:click={() => gotoProject(data.project.id)} class="px-1 text-gray-600 hover:text-gray-300 hover:bg-gray-500 hover:rounded-md">{data.project.title}</button>
             </span>
         {/if}
         <span class="px-3"> Tags:          

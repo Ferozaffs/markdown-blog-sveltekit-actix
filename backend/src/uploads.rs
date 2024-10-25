@@ -9,9 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write;
-use std::str::FromStr;
 use std::sync::Mutex;
-use uuid::Uuid;
 
 #[derive(Deserialize)]
 struct ImageData {
@@ -55,7 +53,10 @@ pub async fn upload_post(
             if let Ok(true) = result {
                 let mut text = data.into_inner();
 
-                let meta_data = filter_meta(&mut text);
+                let mut meta_data = filter_meta(&mut text);
+                if meta_data.id == uuid::Uuid::nil() {
+                    meta_data.id = uuid::Uuid::new_v4();
+                }
 
                 let paths = extract_image_paths(text.as_str());
                 let unique_paths: Vec<String> = paths
@@ -144,60 +145,14 @@ pub async fn upload_image(
 }
 
 fn filter_meta(text: &mut String) -> shared::MetaData {
-    let mut meta_data = shared::MetaData {
-        id: Uuid::new_v4(),
-        project: Uuid::nil(),
-        post_type: 0,
-        title: String::new(),
-        tags: vec![],
-        description: String::new(),
-    };
+    let data = shared::load_meta_data(text);
 
-    let mut count = 0;
-    for line in text.lines() {
-        if !line.starts_with('@') && !line.is_empty() {
-            break;
-        }
-
-        if let Some(data) = line.strip_prefix("@ID: ") {
-            match uuid::Uuid::from_str(data.trim().to_string().as_str()) {
-                Ok(v) => {
-                    if v != uuid::Uuid::nil() {
-                        meta_data.id = v
-                    }
-                }
-                Err(_) => (),
-            }
-        } else if let Some(data) = line.strip_prefix("@TYPE: ") {
-            match data.trim().to_string().parse::<usize>() {
-                Ok(v) => meta_data.post_type = v,
-                Err(_) => (),
-            }
-        } else if let Some(data) = line.strip_prefix("@PROJECT: ") {
-            match uuid::Uuid::from_str(data.trim().to_string().as_str()) {
-                Ok(v) => {
-                    if meta_data.post_type == 0 {
-                        meta_data.project = v
-                    }
-                }
-                Err(_) => (),
-            }
-        } else if let Some(data) = line.strip_prefix("@TITLE: ") {
-            meta_data.title = data.trim().to_string();
-        } else if let Some(data) = line.strip_prefix("@DESCRIPTION: ") {
-            meta_data.description = data.trim().to_string();
-        } else if let Some(data) = line.strip_prefix("@TAGS: ") {
-            meta_data.tags = data.trim().split(',').map(|s| s.to_string()).collect();
-        }
-        count += 1;
-    }
-
-    let lines = text.lines().skip(count);
+    let lines = text.lines().skip(data.1);
     let remaining_text = lines.collect::<Vec<&str>>().join("\n");
 
     text.clear();
     text.push_str(remaining_text.as_str());
-    meta_data
+    data.0
 }
 
 fn extract_image_paths(input: &str) -> Vec<String> {

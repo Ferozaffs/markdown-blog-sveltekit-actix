@@ -8,7 +8,7 @@ CREATE TABLE "public"."keys" (
 DROP TABLE IF EXISTS "posts";
 CREATE TABLE "public"."posts" (
     "id" uuid NOT NULL,
-    "name" text NOT NULL,
+    "title" text NOT NULL,
     "image" text NOT NULL,
     "project_id" uuid,
     "tags" text,
@@ -17,14 +17,14 @@ CREATE TABLE "public"."posts" (
     "description" text
 ) WITH (oids = false);
 
-INSERT INTO "posts" ("id", "name", "image", "project_id", "tags", "content", "date", "description") VALUES
+INSERT INTO "posts" ("id", "title", "image", "project_id", "tags", "content", "date", "description") VALUES
 ('4b3e0de2-04ad-4bfb-b3d0-fd9881a9f008',	'New Galactic Neighbor Discovered',	'testImage3.jpg',	'4c38bf38-59f1-4603-9438-e2766663cf2b',	'Space,Science',	'# New Galactic Neighbor Discovered: Introducing Quasarium Galaxy
 
 *By Astrid Stellaris | August 9, 2023*
 
 ![Quasarium Galaxy](https://fakeimageurl.com/quasarium-galaxy.jpg)
 
-In an astonishing astronomical revelation, astronomers have unveiled the existence of a previously unknown galaxy located just beyond our own Milky Way. Named the "Quasarium Galaxy," this newfound cosmic neighbor is shrouded in intrigue and has ignited a fervor of excitement within the scientific community.
+In an astonishing astronomical revelation, astronomers have unveiled the existence of a previously unknown galaxy located just beyond our own Milky Way. titled the "Quasarium Galaxy," this newfound cosmic neighbor is shrouded in intrigue and has ignited a fervor of excitement within the scientific community.
 
 ## An Unexpected Discovery
 
@@ -120,14 +120,14 @@ INSERT INTO "project_categories" ("id", "category", "description") VALUES
 DROP TABLE IF EXISTS "projects";
 CREATE TABLE "public"."projects" (
     "id" uuid NOT NULL,
-    "name" text NOT NULL,
+    "title" text NOT NULL,
     "image" text NOT NULL,
     "status" integer NOT NULL,
     "category_id" uuid,
     "content" text
 ) WITH (oids = false);
 
-INSERT INTO "projects" ("id", "name", "image", "status", "category_id", "content") VALUES
+INSERT INTO "projects" ("id", "title", "image", "status", "category_id", "content") VALUES
 ('1e33f43d-0193-460a-9128-bffb1d12e57c',	'Groundbreaking Discovery',	'testImage2.jpg',	1,	'c9284c8d-02a4-4b25-9818-20c8a95178c6',	'# Groundbreaking Discovery: Unicorns Spotted in the Amazon Rainforest!
 
 *By Jane Doe | August 9, 2023*

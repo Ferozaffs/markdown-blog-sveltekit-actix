@@ -39,7 +39,7 @@
                                             <img src={PUBLIC_API_URL.concat("/images/").concat(child.image)} alt="" class="display: inline border-2 border-gray-800 dark:border-gray-800 w-12 h-12 rounded-lg overflow-hidden"/>
                                         </td>
                                         <td>
-                                            <p class="px-1">{child.name}</p>
+                                            <p class="px-1">{child.title}</p>
                                             {#if child.status === 0}
                                                 <p class="px-1 text-gray-500 text-sm">[ONGOING]</p>
                                             {:else if child.status === 1}

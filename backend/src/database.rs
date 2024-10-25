@@ -56,7 +56,7 @@ impl Database {
         let connection = self.get_connection().await;
 
         let query = format!(
-            "SELECT projects.id, projects.name, projects.image, projects.status
+            "SELECT projects.id, projects.title, projects.image, projects.status
             FROM projects
             WHERE projects.category_id=(
                 SELECT project_categories.id 
@@ -71,35 +71,54 @@ impl Database {
     pub async fn get_project_summary(&self, id: &str) -> Result<shared::ProjectSummary, Error> {
         let connection = self.get_connection().await;
 
-        match connection.query("SELECT projects.id, projects.name, projects.image, projects.status FROM projects WHERE projects.id=$1", &[&id]).await {
+        let query = format!(
+            "SELECT 
+            projects.id, 
+            projects.title, 
+            projects.image, 
+            projects.status
+            FROM projects
+            WHERE projects.id='{}'",
+            id
+        );
+
+        match connection.query(&query.to_string(), &[]).await {
             Ok(row) => match row.get(0) {
                 Some(data) => Ok(shared::ProjectSummary {
                     id: data.get(0),
-                    name: data.get(1),
+                    title: data.get(1),
                     image: data.get(2),
                     status: data.get(3),
                 }),
                 None => Ok(shared::ProjectSummary::default()),
             },
-            Err(e) => Err(e),
+            Err(e) => {
+                println!("ERROR: {}", e.to_string());
+                Err(e)
+            }
         }
     }
 
     pub async fn get_project_content(&self, id: &str) -> Result<String, Error> {
         let connection = self.get_connection().await;
 
-        match connection
-            .query(
-                "SELECT projects.content FROM projects WHERE projects.id=$1",
-                &[&id],
-            )
-            .await
-        {
+        let query = format!(
+            "SELECT 
+                projects.content 
+                FROM projects
+                WHERE projects.id='{}'",
+            id
+        );
+
+        match connection.query(&query.to_string(), &[]).await {
             Ok(row) => match row.get(0) {
                 Some(content) => Ok(content.get(0)),
                 None => Ok(String::from("")),
             },
-            Err(_) => Ok(String::from("")),
+            Err(e) => {
+                println!("ERROR: {}", e.to_string());
+                Err(e)
+            }
         }
     }
 
@@ -109,7 +128,7 @@ impl Database {
         let mut query = format!(
             "SELECT 
             posts.id, 
-            posts.name, 
+            posts.title, 
             posts.image, 
             TO_CHAR(posts.date, 'yyyy-mm-dd'), 
             posts.description,
@@ -141,7 +160,7 @@ impl Database {
         let query = format!(
             "SELECT 
             posts.id, 
-            posts.name, 
+            posts.title, 
             posts.image, 
             TO_CHAR(posts.date, 'yyyy-mm-dd'), 
             posts.description,
@@ -165,7 +184,10 @@ impl Database {
                 }),
                 None => Ok(shared::PostSummary::default()),
             },
-            Err(e) => Err(e),
+            Err(e) => {
+                println!("ERROR: {}", e.to_string());
+                Err(e)
+            }
         }
     }
 
@@ -197,16 +219,16 @@ impl Database {
         let connection = self.get_connection().await;
 
         let query: String;
-        if md.post_type == 0 {
+        if md.post_type == 1 {
             query = format!(
-                "INSERT INTO projects (id, name, image, status, category_id, content)
+                "INSERT INTO projects (id, title, image, status, category_id, content)
                 VALUES ($1, $2, $3, $4, $5, $6)"
             );
 
             let status = 0;
             let category = uuid::Uuid::nil();
 
-            connection
+            match connection
                 .execute(
                     &query,
                     &[
@@ -219,14 +241,32 @@ impl Database {
                     ],
                 )
                 .await
+            {
+                Ok(v) => Ok(v),
+                Err(e) => {
+                    println!("ERROR: {}", e.to_string());
+                    Err(e)
+                }
+            }
         } else {
+            let mut tags = String::from("");
+            for (i, tag) in md.tags.iter().enumerate() {
+                if tag.len() > 0 {
+                    if i == tags.len() - 1 {
+                        tags.push_str(format!("{}", tag).as_str());
+                    } else {
+                        tags.push_str(format!("{},", tag).as_str());
+                    }
+                }
+            }
+
             query = format!(
-                "INSERT INTO posts (id, name, image, project_id, tags, content, date, description)
+                "INSERT INTO posts (id, title, image, project_id, tags, content, date, description)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
             );
 
             let now: DateTime<Utc> = Utc::now();
-            connection
+            match connection
                 .execute(
                     &query,
                     &[
@@ -234,13 +274,20 @@ impl Database {
                         &md.title,
                         &image_fingerprint,
                         &md.project,
-                        &md.tags,
+                        &tags,
                         &markdown,
                         &now.naive_utc().date(),
                         &md.description,
                     ],
                 )
                 .await
+            {
+                Ok(v) => Ok(v),
+                Err(e) => {
+                    println!("ERROR: {}", e.to_string());
+                    Err(e)
+                }
+            }
         }
     }
 

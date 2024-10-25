@@ -12,7 +12,7 @@
                 <button on:click={() => goto("/")} class="px-10 text-4xl">🠨</button>
         </td>
         <td>
-                <span>{data.name}</span>
+                <span>{data.title}</span>
                 {#if data.status === 0}
                         <span class="px-2 text-gray-500">[ONGOING]</span>
                 {:else if data.status === 1}

@@ -1,5 +1,4 @@
 use crate::database::Database;
-use actix_web::http::header::ContentType;
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Result};
 use serde::Serialize;
 use uuid::Uuid;
@@ -7,7 +6,7 @@ use uuid::Uuid;
 #[derive(Serialize, Debug)]
 struct ProjectSummary {
     id: Uuid,
-    name: String,
+    title: String,
     image: String,
     status: i32,
 }
@@ -27,7 +26,7 @@ pub struct ProjectOverview {
 pub fn create_test_overview() -> ProjectOverview {
     let ps = ProjectSummary {
         id: Uuid::parse_str("1e33f43d-0193-460a-9128-bffb1d12e57c").unwrap(),
-        name: String::from("TestName"),
+        title: String::from("TestName"),
         image: String::from("TestImage.jpg"),
         status: 0,
     };
@@ -63,7 +62,7 @@ async fn project_overview(db: web::Data<Database>) -> Result<impl Responder> {
         for row in result.unwrap() {
             let project = ProjectSummary {
                 id: row.get(0),
-                name: row.get(1),
+                title: row.get(1),
                 image: row.get(2),
                 status: row.get(3),
             };

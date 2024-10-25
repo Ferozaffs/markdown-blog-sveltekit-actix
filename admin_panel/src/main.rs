@@ -3,15 +3,13 @@
 pub mod data;
 pub mod webconnector;
 
-use std::{fs, str::FromStr};
+use std::fs;
 
 use data::ServerContentSummary;
 use eframe::egui;
 use egui_commonmark::{CommonMarkCache, CommonMarkViewer};
 use egui_file::FileDialog;
-use regex::Regex;
 use shared;
-use uuid::Uuid;
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init();
@@ -47,7 +45,7 @@ struct AdminPanel {
     cache: CommonMarkCache,
     file_load_state: Option<FileLoadState>,
     open_file_dialog: Option<FileDialog>,
-    meta_data: Option<shared::MetaData>,
+    meta_data: shared::MetaData,
     tag_field: String,
     selected_download_post: shared::PostSummary,
     selected_download_project: shared::ProjectSummary,
@@ -65,7 +63,7 @@ impl Default for AdminPanel {
             opened_markdown_file: "".to_string(),
             file_load_state: None,
             open_file_dialog: None,
-            meta_data: Some(shared::MetaData::default()),
+            meta_data: shared::MetaData::default(),
             tag_field: "".to_string(),
             selected_download_post: shared::PostSummary::default(),
             selected_download_project: shared::ProjectSummary::default(),
@@ -95,13 +93,15 @@ impl eframe::App for AdminPanel {
                     )
                     .expect("Unable to write file");
                 } else if ui.button("Upload").clicked() {
-                    self.regenereate_meta_data(true);
-                    let _ = webconnector::upload_post(
+                    self.regenereate_meta_data();
+                    match webconnector::upload_post(
                         self.markdown.clone(),
-                        self.meta_data.clone(),
                         &self.server_settings.address,
                         &self.server_settings.api_token,
-                    );
+                    ) {
+                        Ok(_) => (),
+                        Err(e) => println!("ERROR: {}", e.to_string()),
+                    }
                 }
                 ui.label("Posts");
                 egui::ComboBox::from_id_salt("Download posts combo")
@@ -121,14 +121,14 @@ impl eframe::App for AdminPanel {
                     });
                 ui.label("Projects");
                 egui::ComboBox::from_id_salt("Download projects combo")
-                    .selected_text(&self.selected_download_project.name)
+                    .selected_text(&self.selected_download_project.title)
                     .show_ui(ui, |ui| {
                         // Add items to the ComboBox
                         for option in &self.server_content_summary.projects {
                             let response = ui.selectable_value(
                                 &mut self.selected_download_project,
                                 option.clone(),
-                                option.name.as_str(),
+                                option.title.as_str(),
                             );
                             if response.changed() {
                                 self.selected_download_post = shared::PostSummary::default();
@@ -166,92 +166,90 @@ impl eframe::App for AdminPanel {
                 egui::ScrollArea::vertical().id_salt("data").show(ui, |ui| {
                     ui.vertical(|ui| {
                         let mut regenerate = false;
-                        if let Some(meta_data) = self.meta_data.as_mut() {
-                            ui.label("Title");
-                            let response = ui.add(egui::TextEdit::singleline(&mut meta_data.title));
-                            if response.changed() {
-                                regenerate = true;
-                            }
+                        ui.label("Title");
+                        let response =
+                            ui.add(egui::TextEdit::singleline(&mut self.meta_data.title));
+                        if response.changed() {
+                            regenerate = true;
+                        }
 
-                            ui.label("Description");
+                        ui.label("Description");
+                        let response =
+                            ui.add(egui::TextEdit::singleline(&mut self.meta_data.description));
+                        if response.changed() {
+                            regenerate = true;
+                        }
+
+                        let options = vec!["Post", "Project"];
+                        ui.label("Type");
+                        for (index, option) in options.iter().enumerate() {
                             let response =
-                                ui.add(egui::TextEdit::singleline(&mut meta_data.description));
+                                ui.radio_value(&mut self.meta_data.post_type, index, *option);
                             if response.changed() {
+                                if self.meta_data.post_type == 1 {
+                                    self.meta_data.project = uuid::Uuid::nil();
+                                    self.selected_upload_project =
+                                        shared::ProjectSummary::default();
+                                }
                                 regenerate = true;
                             }
+                        }
 
-                            let options = vec!["Post", "Project"];
-                            ui.label("Type");
-                            for (index, option) in options.iter().enumerate() {
-                                let response =
-                                    ui.radio_value(&mut meta_data.post_type, index, *option);
-                                if response.changed() {
-                                    if meta_data.post_type == 1 {
-                                        meta_data.project = uuid::Uuid::nil();
-                                        self.selected_upload_project =
-                                            shared::ProjectSummary::default();
+                        if self.meta_data.post_type == 0 {
+                            ui.label("Project");
+                            egui::ComboBox::from_id_salt("Project combo")
+                                .selected_text(&self.selected_upload_project.title)
+                                .show_ui(ui, |ui| {
+                                    // Add items to the ComboBox
+                                    for option in &self.server_content_summary.projects {
+                                        let response = ui.selectable_value(
+                                            &mut self.selected_upload_project,
+                                            option.clone(),
+                                            option.title.as_str(),
+                                        );
+                                        if response.changed() {
+                                            self.meta_data.project =
+                                                self.selected_upload_project.id;
+                                            regenerate = true;
+                                        }
                                     }
+                                });
+                        }
+
+                        ui.label("Tags");
+                        ui.horizontal(|ui| {
+                            ui.add(egui::TextEdit::singleline(&mut self.tag_field));
+                            let response = ui.button("Add");
+                            if response.clicked() {
+                                if self.tag_field.len() > 0
+                                    && !self.meta_data.tags.contains(&self.tag_field)
+                                {
+                                    self.meta_data.tags.push(self.tag_field.clone());
                                     regenerate = true;
                                 }
                             }
+                        });
 
-                            if meta_data.post_type == 0 {
-                                ui.label("Project");
-                                egui::ComboBox::from_id_salt("Project combo")
-                                    .selected_text(&self.selected_upload_project.name)
-                                    .show_ui(ui, |ui| {
-                                        // Add items to the ComboBox
-                                        for option in &self.server_content_summary.projects {
-                                            let response = ui.selectable_value(
-                                                &mut self.selected_upload_project,
-                                                option.clone(),
-                                                option.name.as_str(),
-                                            );
-                                            if response.changed() {
-                                                meta_data.project = self.selected_upload_project.id;
-                                                regenerate = true;
-                                            }
-                                        }
-                                    });
-                            }
-
-                            ui.label("Tags");
+                        let mut index_removal: Vec<usize> = Vec::new();
+                        for (i, tag) in self.meta_data.tags.iter().enumerate() {
                             ui.horizontal(|ui| {
-                                ui.add(egui::TextEdit::singleline(&mut self.tag_field));
-                                let response = ui.button("Add");
+                                ui.label(tag);
+                                let response = ui.button("X");
                                 if response.clicked() {
-                                    if self.tag_field.len() > 0
-                                        && !meta_data.tags.contains(&self.tag_field)
-                                    {
-                                        meta_data.tags.push(self.tag_field.clone());
-                                        regenerate = true;
-                                    }
+                                    index_removal.push(i)
                                 }
                             });
+                        }
 
-                            let mut index_removal: Vec<usize> = Vec::new();
-                            for (i, tag) in meta_data.tags.iter().enumerate() {
-                                ui.horizontal(|ui| {
-                                    ui.label(tag);
-                                    let response = ui.button("X");
-                                    if response.clicked() {
-                                        index_removal.push(i)
-                                    }
-                                });
+                        if index_removal.len() > 0 {
+                            for index in index_removal.iter() {
+                                self.meta_data.tags.remove(*index);
                             }
-
-                            if index_removal.len() > 0 {
-                                for index in index_removal.iter() {
-                                    meta_data.tags.remove(*index);
-                                }
-                                regenerate = true
-                            }
-                        } else {
-                            ui.label("No data");
+                            regenerate = true
                         }
 
                         if regenerate == true {
-                            self.regenereate_meta_data(true);
+                            self.regenereate_meta_data();
                         }
                     });
                 });
@@ -282,102 +280,21 @@ impl eframe::App for AdminPanel {
 }
 
 impl AdminPanel {
-    fn regenereate_meta_data(&mut self, clean: bool) {
-        let mut md_meta: String = "@META\n".to_string();
-        md_meta.push_str(format!("@ID: {}\n", self.meta_data.as_ref().unwrap().id).as_str());
-        md_meta.push_str(format!("@TITLE: {}\n", self.meta_data.as_ref().unwrap().title).as_str());
-        md_meta.push_str(
-            format!(
-                "@DESCRIPTION: {}\n",
-                self.meta_data.as_ref().unwrap().description
-            )
-            .as_str(),
-        );
-        md_meta
-            .push_str(format!("@TYPE: {}\n", self.meta_data.as_ref().unwrap().post_type).as_str());
-        md_meta
-            .push_str(format!("@PROJECT: {}\n", self.meta_data.as_ref().unwrap().project).as_str());
-        md_meta.push_str("@TAGS: ");
-
-        let tags = &self.meta_data.as_ref().unwrap().tags;
-        for (i, tag) in tags.iter().enumerate() {
-            if i == tags.len() - 1 {
-                md_meta.push_str(format!("{}", tag).as_str());
-            } else {
-                md_meta.push_str(format!("{},", tag).as_str());
-            }
-        }
-
-        if clean == true {
-            let lines: Vec<&str> = self.markdown.lines().collect();
-            let cleaned_lines: Vec<&str> = lines.iter().skip(8).cloned().collect();
-            self.markdown = cleaned_lines.join("\n");
-        }
-
-        self.markdown = format!("{}\n\n{}", md_meta, self.markdown);
+    fn regenereate_meta_data(&mut self) {
+        shared::store_meta_data(&mut self.markdown, self.meta_data.clone());
     }
 
-    fn load_meta_data(&mut self, clean: bool) {
-        if let Some(meta_data) = self.meta_data.as_mut() {
-            let re = Regex::new(r"@ID:\s(.*)").unwrap();
-            if let Some(caps) = re.captures(self.markdown.as_str()) {
-                match uuid::Uuid::from_str(caps[1].to_string().as_str()) {
-                    Ok(v) => meta_data.id = v,
-                    Err(_) => meta_data.id = uuid::Uuid::nil(),
-                }
-            }
+    fn load_meta_data(&mut self) {
+        self.meta_data = shared::load_meta_data(&self.markdown).0;
 
-            let re = Regex::new(r"@TITLE:\s(.*)").unwrap();
-            if let Some(caps) = re.captures(self.markdown.as_str()) {
-                meta_data.title = caps[1].to_string();
-            } else {
-                let re = Regex::new(r"#\s(.*)").unwrap();
-                if let Some(caps) = re.captures(self.markdown.as_str()) {
-                    meta_data.title = caps[1].to_string();
-                }
-            }
-
-            let re = Regex::new(r"@DESCRIPTION:\s(.*)").unwrap();
-            if let Some(caps) = re.captures(self.markdown.as_str()) {
-                meta_data.description = caps[1].to_string();
-            }
-
-            let re = Regex::new(r"@TYPE:\s(.*)").unwrap();
-            if let Some(caps) = re.captures(self.markdown.as_str()) {
-                match caps[1].to_string().parse::<usize>() {
-                    Ok(v) => meta_data.post_type = v,
-                    Err(_) => meta_data.post_type = 0,
-                }
-            }
-
-            meta_data.tags.clear();
-            let re = Regex::new(r"@TAGS:\s(.*)").unwrap();
-            if let Some(caps) = re.captures(self.markdown.as_str()) {
-                let tags = caps[1].split(",");
-                for tag in tags {
-                    if tag.len() > 0 {
-                        meta_data.tags.push(tag.to_string());
-                    }
-                }
-            }
-
-            let re = Regex::new(r"@PROJECT:\s(.*)").unwrap();
-            if let Some(caps) = re.captures(self.markdown.as_str()) {
-                match uuid::Uuid::from_str(caps[1].to_string().as_str()) {
-                    Ok(v) => meta_data.project = v,
-                    Err(_) => meta_data.project = uuid::Uuid::nil(),
-                }
-            }
-
-            self.regenereate_meta_data(clean);
-        }
+        self.regenereate_meta_data();
     }
 
     fn check_for_macros(&mut self) {
         if self.prev_markdown != self.markdown {
             let meta_data = self.markdown.find("@@META");
             if meta_data.is_some() {
-                self.load_meta_data(false);
+                self.load_meta_data();
             }
 
             let image = self.markdown.find("@@IMAGE");
@@ -409,8 +326,7 @@ impl AdminPanel {
                             self.markdown =
                                 fs::read_to_string(self.opened_markdown_file.clone()).unwrap();
 
-                            let meta_data = self.markdown.find("@META");
-                            self.load_meta_data(meta_data.is_some())
+                            self.load_meta_data()
                         }
                         FileLoadState::LoadImage => {
                             let image_md = format!(
@@ -437,12 +353,11 @@ impl AdminPanel {
         let mut id = uuid::Uuid::nil();
         if self.selected_download_post.title.is_empty() == false {
             id = self.selected_download_post.id
-        } else if self.selected_download_project.name.is_empty() == false {
+        } else if self.selected_download_project.title.is_empty() == false {
             id = self.selected_download_project.id
         }
-        let markdown = webconnector::get_markdown(id);
+        self.markdown = webconnector::get_markdown(self.server_settings.address.as_str(), id);
 
-        let meta_data = self.markdown.find("@META");
-        self.load_meta_data(meta_data.is_some())
+        self.load_meta_data()
     }
 }

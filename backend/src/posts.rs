@@ -1,5 +1,4 @@
 use crate::database::Database;
-use actix_web::http::header::ContentType;
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Result};
 use shared;
 

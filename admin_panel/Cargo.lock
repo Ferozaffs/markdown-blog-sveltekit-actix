@@ -2067,7 +2067,6 @@ dependencies = [
  "egui_extras",
  "egui_file",
  "env_logger",
- "regex",
  "reqwest",
  "serde",
  "serde_json",
@@ -3133,6 +3132,7 @@ dependencies = [
 name = "shared"
 version = "0.1.0"
 dependencies = [
+ "regex",
  "serde",
  "uuid",
 ]
