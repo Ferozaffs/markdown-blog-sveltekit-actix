@@ -5,7 +5,7 @@
 </script>
 
 <div class="flex flex-col h-screen overflow-hidden">
-        <div class="w-full bg-gray-800 h-14 text-xl text-gray-400">
+        <div class="w-full primary-color h-14 text-xl text-primary-color">
         <table>
         <tr>
         <td>
@@ -14,7 +14,7 @@
         <td>
                 <span>{data.title}</span>
                 {#if data.status === 0}
-                        <span class="px-2 text-gray-500">[ONGOING]</span>
+                        <span class="px-2 text-primary-color">[ONGOING]</span>
                 {:else if data.status === 1}
                         <span class="px-2 text-green-600 text-base">[COMPLETED]</span>
                 {/if}
@@ -22,8 +22,8 @@
         </tr>
         </table>                 
         </div>       
-        <div class="flex-grow h-full w-full overflow-y-auto bg-gray-600">
-                <div class="p-20 font-medium text-gray-400 prose max-w-screen-lg prose-lg">
+        <div class="flex-grow h-full w-full overflow-y-auto primary-color">
+                <div class="p-20 font-medium text-primary-color prose max-w-screen-lg prose-lg">
                         <slot />
                 </div>
         </div>   

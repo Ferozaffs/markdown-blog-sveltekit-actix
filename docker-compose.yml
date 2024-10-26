@@ -8,13 +8,15 @@ services:
     depends_on:
       - db
     volumes:
-      - backend-data:/assets
+      - backend-data:/backend/assets
 
   frontend:
     build:
       context: ./frontend
     ports:
       - "3000:3000"
+    volumes:
+      - frontend-data:/static
 
   db:
     image: postgres:latest
@@ -36,6 +38,7 @@ services:
 volumes:
   postgres-data:
   backend-data:
+  frontend-data:
 
 
 

@@ -25,14 +25,14 @@
 {:then po}
     <div class="w-full px-20 content-center grid gap-10 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
         {#each po.categories as category}
-            <div class="font-medium text-gray-400">
+            <div class="font-medium text-secondary-color">
                 <p class="text-2xl">{category.title}</p>
                 <p class="text-xs">{category.description}</p>
                 <br>
                 <ul>
                     {#each category.children as child}
                         <li>
-                            <button on:click={() => gotoProject(child.id)} class="hover:bg-gray-900 dark:hover:bg-gray-700 rounded-lg w-full text-left">
+                            <button on:click={() => gotoProject(child.id)} class="primary-color text-primary-color rounded-lg w-full text-left">
                                 <table>
                                     <tr>
                                         <td>
@@ -41,9 +41,9 @@
                                         <td>
                                             <p class="px-1">{child.title}</p>
                                             {#if child.status === 0}
-                                                <p class="px-1 text-gray-500 text-sm">[ONGOING]</p>
+                                                <p class="px-1 text-secondary-color text-sm">[ONGOING]</p>
                                             {:else if child.status === 1}
-                                                <p class="px-1 text-green-600 text-sm">[COMPLETED]</p>
+                                                <p class="px-1 text-secondary-color text-sm">[COMPLETED]</p>
                                             {/if}
                                         </td>
                                     </tr>
@@ -56,6 +56,6 @@
         {/each}
 </div>
 {:catch error}
-<p class="px-20 font-medium text-gray-400">{error}</p>
+<p class="px-20 font-medium text-primary-color">{error}</p>
 {/await}
 

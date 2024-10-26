@@ -67,5 +67,5 @@
         {/each}
     </div>
 {:catch error}
-    <p class="px-20 font-medium text-gray-400">{error}</p>
+    <p class="px-20 font-medium text-primary-color">{error}</p>
 {/await}

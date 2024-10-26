@@ -6,6 +6,8 @@
 	import { currentContent, currentTags } from '$lib/store.js';
     import { ContentArea } from '$lib/Constants.svelte';
 	import FilterWidget from '$lib/FilterWidget.svelte';
+    import { onMount } from 'svelte';
+    import { BarLoader } from 'svelte-loading-spinners';
 
     let tags;
     let filterWidget = null
@@ -47,15 +49,44 @@
         $currentContent = ContentArea.About;
     }
 
+    let title = ''
+
+    let themeLoaded = false
+    onMount(async () => {
+        await loadTheme();
+        themeLoaded = true
+    });
+
+    async function loadTheme() {
+        const response = await fetch('/theme.json');
+        const data = await response.json();
+
+        document.documentElement.style.setProperty('--background-primary-color', data.backgroundprimary);
+        document.documentElement.style.setProperty('--background-secondary-color', data.backgroundsecondary);
+        document.documentElement.style.setProperty('--primary-color', data.primary);
+        document.documentElement.style.setProperty('--primary-color-hover', data.primaryhover);
+        document.documentElement.style.setProperty('--secondary-color', data.secondary);
+        document.documentElement.style.setProperty('--secondary-color-hover', data.secondaryhover);
+        document.documentElement.style.setProperty('--text-primary-color', data.textprimary);
+        document.documentElement.style.setProperty('--text-primary-color-hover', data.textprimaryhover);
+        document.documentElement.style.setProperty('--text-secondary-color', data.textsecondary);
+
+        title = data.title;
+    }
 
 </script>
 
+{#if themeLoaded == false}
+    <div class="flex justify-center items-center">
+        <BarLoader size="80" color="#2d3342 " unit="px" duration="1s" />
+    </div>
+{:else}
 <div class="flex h-screen flex-col">
-    <div class="flex justify-center items-center bg-gray-800">
-        <p class="py-5 h-24 text-5xl text-gray-400">Markdown blog</p>
+    <div class="bg-secondary-color flex justify-center items-center">
+        <p class="py-5 h-24 text-5xl text-secondary-color">{title}</p>
     </div>
     
-    <div class="bg-gray-600">
+    <div class="bg-primary-color">
     <table class="w-full table-fixed">
         <tr>
         <td class="md:w-1/6 w-1/12"/>
@@ -71,7 +102,7 @@
     </table>    
     </div>
     
-    <div class="flex-1 bg-gray-600">
+    <div class="flex-1 bg-primary-color">
         {#if $currentContent === ContentArea.Posts}
             <PostsListView bind:storedTags={tags}/>
         {:else if $currentContent === ContentArea.Projects}
@@ -81,3 +112,4 @@
         {/if}
     </div>
 </div>
+{/if}

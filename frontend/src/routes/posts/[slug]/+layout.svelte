@@ -18,22 +18,22 @@
 </script>
 
 <div class="flex flex-col h-screen overflow-hidden">
-    <div class="w-full bg-gray-800 h-fit py-4 text-xs text-gray-500">
+    <div class="w-full primary-color h-fit py-4 text-xs text-primary-color">
     <table class="w-full">
     <tr>
     <td class="w-20">
-        <button on:click={() => goto("/")} class="px-10 text-4xl text-gray-400">🠨</button>
+        <button on:click={() => goto("/")} class="px-10 text-4xl text-primary-color">🠨</button>
     </td>
     <td>
-        <p class="text-xl text-gray-400">{data.post.title}</p>   
+        <p class="text-xl text-primary-color">{data.post.title}</p>   
         {#if data.project != null}
             <span>Go to project:
-                <button on:click={() => gotoProject(data.project.id)} class="px-1 text-gray-600 hover:text-gray-300 hover:bg-gray-500 hover:rounded-md">{data.project.title}</button>
+                <button on:click={() => gotoProject(data.project.id)} class="px-1 text-gray-600 hover:text-gray-300 hover:rounded-md">{data.project.title}</button>
             </span>
         {/if}
         <span class="px-3"> Tags:          
             {#each data.post.tags.split(",") as tag}
-            <button on:click={() => gotoPosts(tag)} class="px-1 text-gray-600 hover:text-gray-300 hover:bg-gray-500 hover:rounded-md">{tag}</button>
+            <button on:click={() => gotoPosts(tag)} class="px-1 text-gray-600 hover:text-gray-300 hover:rounded-md">{tag}</button>
             {/each}
         </span>
     </td>
@@ -41,8 +41,8 @@
     </table>
                  
     </div>       
-    <div class="flex-grow h-full w-full overflow-y-auto bg-gray-600">
-            <div class="p-20 font-medium text-gray-400 prose max-w-screen-lg prose-lg">
+    <div class="flex-grow h-full w-full overflow-y-auto primary-color">
+            <div class="p-20 font-medium text-primary-color prose max-w-screen-lg prose-lg">
                     <slot />
             </div>
     </div>   

@@ -1,0 +1,12 @@
+{
+    "title": "Markdown blog",
+    "backgroundprimary": "#18181b",
+    "backgroundsecondary": "#27272a",
+    "primary": "#27272a",
+    "primaryhover": "#3f3f46",
+    "secondary": "#52525b",
+    "secondaryhover": "#71717a",
+    "textprimary": "#d4d4d4",
+    "textprimaryhover": "#f5f5f5",
+    "textsecondary": "#a3a3a3"
+}
