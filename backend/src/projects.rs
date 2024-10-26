@@ -1,43 +1,23 @@
 use crate::database::Database;
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Result};
-use serde::Serialize;
-use uuid::Uuid;
 
-#[derive(Serialize, Debug)]
-struct ProjectSummary {
-    id: Uuid,
-    title: String,
-    image: String,
-    status: i32,
-}
-
-#[derive(Serialize, Debug)]
-struct ProjectCategory {
-    title: String,
-    description: String,
-    children: Vec<ProjectSummary>,
-}
-
-#[derive(Serialize, Debug)]
-pub struct ProjectOverview {
-    categories: Vec<ProjectCategory>,
-}
-
-pub fn create_test_overview() -> ProjectOverview {
-    let ps = ProjectSummary {
-        id: Uuid::parse_str("1e33f43d-0193-460a-9128-bffb1d12e57c").unwrap(),
+pub fn create_test_overview() -> shared::ProjectOverview {
+    let ps = shared::ProjectSummary {
+        id: uuid::Uuid::new_v4(),
         title: String::from("TestName"),
         image: String::from("TestImage.jpg"),
         status: 0,
+        category: uuid::Uuid::new_v4(),
     };
 
-    let pc = ProjectCategory {
+    let pc = shared::ProjectCategory {
+        id: uuid::Uuid::new_v4(),
         title: String::from("TestTitle"),
         description: String::from("TestDescription"),
         children: Vec::from([ps]),
     };
 
-    let po = ProjectOverview {
+    let po = shared::ProjectOverview {
         categories: Vec::from([pc]),
     };
 
@@ -46,25 +26,28 @@ pub fn create_test_overview() -> ProjectOverview {
 
 #[get("/projectoverview")]
 async fn project_overview(db: web::Data<Database>) -> Result<impl Responder> {
-    let mut overview = ProjectOverview {
+    let mut overview = shared::ProjectOverview {
         categories: Vec::new(),
     };
 
     let result = db.get_project_categories().await;
     for row in result.unwrap() {
-        let mut category = ProjectCategory {
-            title: row.get(0),
-            description: row.get(1),
+        let mut category = shared::ProjectCategory {
+            id: row.get(0),
+            title: row.get(1),
+            description: row.get(2),
             children: Vec::new(),
         };
 
         let result = db.get_projects_from_category(&category.title).await;
         for row in result.unwrap() {
-            let project = ProjectSummary {
+            let s: i32 = row.get(3);
+            let project = shared::ProjectSummary {
                 id: row.get(0),
                 title: row.get(1),
                 image: row.get(2),
-                status: row.get(3),
+                status: s.try_into().unwrap(),
+                category: row.get(4),
             };
 
             category.children.push(project);

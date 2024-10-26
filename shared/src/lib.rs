@@ -9,6 +9,8 @@ pub struct MetaData {
     pub description: String,
     pub post_type: usize,
     pub project: uuid::Uuid,
+    pub status: usize,
+    pub category: uuid::Uuid,
     pub tags: Vec<String>,
 }
 
@@ -20,6 +22,8 @@ impl Default for MetaData {
             description: String::from(""),
             post_type: 0,
             project: uuid::Uuid::nil(),
+            status: 0,
+            category: uuid::Uuid::nil(),
             tags: vec![],
         }
     }
@@ -57,6 +61,24 @@ pub fn load_meta_data(text: &str) -> (MetaData, usize) {
                 }
                 Err(_) => (),
             }
+        } else if let Some(data) = line.strip_prefix("@STATUS: ") {
+            match data.trim().to_string().parse::<usize>() {
+                Ok(v) => {
+                    if meta_data.post_type == 1 {
+                        meta_data.status = v
+                    }
+                }
+                Err(_) => (),
+            }
+        } else if let Some(data) = line.strip_prefix("@CATEGORY: ") {
+            match uuid::Uuid::from_str(data.trim().to_string().as_str()) {
+                Ok(v) => {
+                    if meta_data.post_type == 1 {
+                        meta_data.category = v
+                    }
+                }
+                Err(_) => (),
+            }
         } else if let Some(data) = line.strip_prefix("@TITLE: ") {
             meta_data.title = data.trim().to_string();
         } else if let Some(data) = line.strip_prefix("@DESCRIPTION: ") {
@@ -84,6 +106,8 @@ pub fn store_meta_data(text: &mut String, meta_data: MetaData) {
     md_meta.push_str(format!("@DESCRIPTION: {}\n", meta_data.description).as_str());
     md_meta.push_str(format!("@TYPE: {}\n", meta_data.post_type).as_str());
     md_meta.push_str(format!("@PROJECT: {}\n", meta_data.project).as_str());
+    md_meta.push_str(format!("@STATUS: {}\n", meta_data.status).as_str());
+    md_meta.push_str(format!("@CATEGORY: {}\n", meta_data.category).as_str());
     md_meta.push_str("@TAGS: ");
 
     let tags = &meta_data.tags;
@@ -101,7 +125,7 @@ pub fn store_meta_data(text: &mut String, meta_data: MetaData) {
     if clean == true {
         cloned_text = cloned_text
             .lines()
-            .skip(8)
+            .skip(10)
             .collect::<Vec<&str>>()
             .join("\n");
     }
@@ -140,7 +164,8 @@ pub struct ProjectSummary {
     pub id: Uuid,
     pub title: String,
     pub image: String,
-    pub status: i32,
+    pub status: usize,
+    pub category: Uuid,
 }
 
 impl Default for ProjectSummary {
@@ -150,15 +175,28 @@ impl Default for ProjectSummary {
             title: String::from(""),
             image: String::from(""),
             status: 0,
+            category: uuid::Uuid::nil(),
         }
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct ProjectCategory {
+    pub id: Uuid,
     pub title: String,
     pub description: String,
     pub children: Vec<ProjectSummary>,
+}
+
+impl Default for ProjectCategory {
+    fn default() -> Self {
+        ProjectCategory {
+            id: uuid::Uuid::nil(),
+            title: String::from(""),
+            description: String::from(""),
+            children: vec![],
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]

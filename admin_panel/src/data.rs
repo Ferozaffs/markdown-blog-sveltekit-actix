@@ -7,6 +7,7 @@ use std::io::{self, Read, Write};
 pub struct ServerContentSummary {
     pub posts: Vec<shared::PostSummary>,
     pub projects: Vec<shared::ProjectSummary>,
+    pub categories: Vec<shared::ProjectCategory>,
 }
 
 impl Default for ServerContentSummary {
@@ -14,6 +15,7 @@ impl Default for ServerContentSummary {
         ServerContentSummary {
             posts: vec![],
             projects: vec![],
+            categories: vec![],
         }
     }
 }

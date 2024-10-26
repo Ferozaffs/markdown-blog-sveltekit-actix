@@ -50,6 +50,7 @@ struct AdminPanel {
     selected_download_post: shared::PostSummary,
     selected_download_project: shared::ProjectSummary,
     selected_upload_project: shared::ProjectSummary,
+    selected_upload_category: shared::ProjectCategory,
     server_settings: data::ServerSettings,
     server_content_summary: data::ServerContentSummary,
 }
@@ -68,6 +69,7 @@ impl Default for AdminPanel {
             selected_download_post: shared::PostSummary::default(),
             selected_download_project: shared::ProjectSummary::default(),
             selected_upload_project: shared::ProjectSummary::default(),
+            selected_upload_category: shared::ProjectCategory::default(),
             server_settings: data::load_server_settings(),
             server_content_summary: ServerContentSummary::default(),
         }
@@ -214,21 +216,50 @@ impl eframe::App for AdminPanel {
                                         }
                                     }
                                 });
-                        }
 
-                        ui.label("Tags");
-                        ui.horizontal(|ui| {
-                            ui.add(egui::TextEdit::singleline(&mut self.tag_field));
-                            let response = ui.button("Add");
-                            if response.clicked() {
-                                if self.tag_field.len() > 0
-                                    && !self.meta_data.tags.contains(&self.tag_field)
-                                {
-                                    self.meta_data.tags.push(self.tag_field.clone());
+                            ui.label("Tags");
+                            ui.horizontal(|ui| {
+                                ui.add(egui::TextEdit::singleline(&mut self.tag_field));
+                                let response = ui.button("Add");
+                                if response.clicked() {
+                                    if self.tag_field.len() > 0
+                                        && !self.meta_data.tags.contains(&self.tag_field)
+                                    {
+                                        self.meta_data.tags.push(self.tag_field.clone());
+                                        regenerate = true;
+                                    }
+                                }
+                            });
+                        } else if self.meta_data.post_type == 1 {
+                            let options = vec!["Ongoing", "Completed"];
+                            ui.label("Status");
+                            for (index, option) in options.iter().enumerate() {
+                                let response =
+                                    ui.radio_value(&mut self.meta_data.status, index, *option);
+                                if response.changed() {
                                     regenerate = true;
                                 }
                             }
-                        });
+
+                            ui.label("Category");
+                            egui::ComboBox::from_id_salt("Category combo")
+                                .selected_text(&self.selected_upload_category.title)
+                                .show_ui(ui, |ui| {
+                                    // Add items to the ComboBox
+                                    for option in &self.server_content_summary.categories {
+                                        let response = ui.selectable_value(
+                                            &mut self.selected_upload_category,
+                                            option.clone(),
+                                            option.title.as_str(),
+                                        );
+                                        if response.changed() {
+                                            self.meta_data.category =
+                                                self.selected_upload_category.id;
+                                            regenerate = true;
+                                        }
+                                    }
+                                });
+                        }
 
                         let mut index_removal: Vec<usize> = Vec::new();
                         for (i, tag) in self.meta_data.tags.iter().enumerate() {

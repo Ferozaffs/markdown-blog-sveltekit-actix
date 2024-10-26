@@ -48,7 +48,7 @@ impl Database {
     pub async fn get_project_categories(&self) -> Result<Vec<Row>, Error> {
         let connection = self.get_connection().await;
 
-        connection.query("SELECT project_categories.category, project_categories.description FROM project_categories",&[])
+        connection.query("SELECT project_categories.id, project_categories.category, project_categories.description FROM project_categories",&[])
         .await
     }
 
@@ -56,7 +56,7 @@ impl Database {
         let connection = self.get_connection().await;
 
         let query = format!(
-            "SELECT projects.id, projects.title, projects.image, projects.status
+            "SELECT projects.id, projects.title, projects.image, projects.status, projects.category_id
             FROM projects
             WHERE projects.category_id=(
                 SELECT project_categories.id 
@@ -76,7 +76,8 @@ impl Database {
             projects.id, 
             projects.title, 
             projects.image, 
-            projects.status
+            projects.status,
+            projects.category_id
             FROM projects
             WHERE projects.id='{}'",
             id
@@ -84,12 +85,16 @@ impl Database {
 
         match connection.query(&query.to_string(), &[]).await {
             Ok(row) => match row.get(0) {
-                Some(data) => Ok(shared::ProjectSummary {
-                    id: data.get(0),
-                    title: data.get(1),
-                    image: data.get(2),
-                    status: data.get(3),
-                }),
+                Some(data) => {
+                    let s: i32 = data.get(3);
+                    Ok(shared::ProjectSummary {
+                        id: data.get(0),
+                        title: data.get(1),
+                        image: data.get(2),
+                        status: s.try_into().unwrap(),
+                        category: data.get(4),
+                    })
+                }
                 None => Ok(shared::ProjectSummary::default()),
             },
             Err(e) => {
@@ -225,8 +230,7 @@ impl Database {
                 VALUES ($1, $2, $3, $4, $5, $6)"
             );
 
-            let status = 0;
-            let category = uuid::Uuid::nil();
+            let status: i32 = md.status.try_into().unwrap();
 
             match connection
                 .execute(
@@ -236,7 +240,7 @@ impl Database {
                         &md.title,
                         &image_fingerprint,
                         &status,
-                        &category,
+                        &md.category,
                         &markdown,
                     ],
                 )

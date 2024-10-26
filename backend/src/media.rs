@@ -26,6 +26,8 @@ async fn get_markdown(db: web::Data<Database>, req: HttpRequest) -> Result<impl 
                     description: v.description,
                     post_type: 0,
                     project: v.project_id,
+                    status: 0,
+                    category: uuid::Uuid::nil(),
                     tags: v.tags.split(',').map(|s| s.to_string()).collect(),
                 };
 
@@ -45,6 +47,8 @@ async fn get_markdown(db: web::Data<Database>, req: HttpRequest) -> Result<impl 
                     description: String::from(""),
                     post_type: 1,
                     project: uuid::Uuid::nil(),
+                    status: v.status,
+                    category: v.category,
                     tags: vec![],
                 };
 

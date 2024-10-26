@@ -5,8 +5,6 @@ use reqwest::{blocking, blocking::get, blocking::Client, header};
 use serde::{Deserialize, Serialize};
 use std::fs;
 
-const API_KEY: &str = "offfdkTJrYwDSRqJzAsuKGgbYzbP6Xe2";
-
 #[derive(Deserialize)]
 struct ImageUploadData {
     image_url: String,
@@ -88,18 +86,26 @@ pub fn load_content_summary(server: &str) -> data::ServerContentSummary {
     let mut project_overview: Option<shared::ProjectOverview> = None;
     match get(format!("http://{}/projectoverview", server)) {
         Ok(res) => match res.json::<shared::ProjectOverview>() {
-            Ok(v) => project_overview = Some(v),
+            Ok(v) => {
+                println!("Projects found");
+                project_overview = Some(v)
+            }
+
             Err(_) => (),
         },
-        Err(_) => (),
+        Err(e) => println!("ERROR: {}", e.to_string()),
     }
 
-    if project_overview.is_some() {
-        for category in project_overview.unwrap().categories.iter() {
-            for project in category.children.iter() {
-                server_content_summary.projects.push(project.clone());
+    match project_overview {
+        Some(po) => {
+            for category in po.categories.iter() {
+                server_content_summary.categories.push(category.clone());
+                for project in category.children.iter() {
+                    server_content_summary.projects.push(project.clone());
+                }
             }
         }
+        None => println!("No projects found"),
     }
 
     match get(format!("http://{}/posts/*", server)) {
