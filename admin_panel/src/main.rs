@@ -95,7 +95,7 @@ impl eframe::App for AdminPanel {
                     )
                     .expect("Unable to write file");
                 } else if ui.button("Upload").clicked() {
-                    self.regenereate_meta_data();
+                    self.load_meta_data();
                     match webconnector::upload_post(
                         self.markdown.clone(),
                         &self.server_settings.address,
@@ -104,6 +104,7 @@ impl eframe::App for AdminPanel {
                         Ok(_) => (),
                         Err(e) => println!("ERROR: {}", e.to_string()),
                     }
+                    self.get_server_content_summary();
                 }
                 ui.label("Posts");
                 egui::ComboBox::from_id_salt("Download posts combo")
@@ -360,10 +361,12 @@ impl AdminPanel {
                             self.load_meta_data()
                         }
                         FileLoadState::LoadImage => {
-                            let image_md = format!(
-                                "![@IMAGE]({})",
-                                Some(file.to_path_buf()).unwrap().to_str().unwrap()
-                            );
+                            let escaped_path = Some(file.to_path_buf())
+                                .unwrap()
+                                .to_str()
+                                .unwrap()
+                                .replace("\\", "\\\\");
+                            let image_md = format!("![@IMAGE]({})", escaped_path);
                             self.markdown = self.markdown.replacen("@@IMAGE", &image_md, 1);
                         }
                     }

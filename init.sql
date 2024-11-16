@@ -124,7 +124,8 @@ CREATE TABLE "public"."projects" (
     "image" text NOT NULL,
     "status" integer NOT NULL,
     "category_id" uuid,
-    "content" text
+    "content" text,
+    "description" text
 ) WITH (oids = false);
 
 INSERT INTO "projects" ("id", "title", "image", "status", "category_id", "content") VALUES

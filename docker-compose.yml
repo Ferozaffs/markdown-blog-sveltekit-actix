@@ -35,6 +35,12 @@ services:
           cpus: '0.5'
           memory: 512M
 
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8085:8080
+
 volumes:
   postgres-data:
   backend-data:

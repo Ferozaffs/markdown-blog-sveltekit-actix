@@ -217,7 +217,7 @@ impl Database {
 
     pub async fn save_post(
         &self,
-        md: MetaData,
+        md: &MetaData,
         markdown: &str,
         image_fingerprint: &str,
     ) -> Result<u64, Error> {
@@ -226,8 +226,8 @@ impl Database {
         let query: String;
         if md.post_type == 1 {
             query = format!(
-                "INSERT INTO projects (id, title, image, status, category_id, content)
-                VALUES ($1, $2, $3, $4, $5, $6)"
+                "INSERT INTO projects (id, title, image, status, category_id, content, description)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)"
             );
 
             let status: i32 = md.status.try_into().unwrap();
@@ -242,6 +242,7 @@ impl Database {
                         &status,
                         &md.category,
                         &markdown,
+                        &md.description,
                     ],
                 )
                 .await
@@ -292,6 +293,20 @@ impl Database {
                     Err(e)
                 }
             }
+        }
+    }
+
+    pub async fn delete_post(&self, md: &MetaData) {
+        let connection = self.get_connection().await;
+
+        if md.post_type == 1 {
+            _ = connection
+                .query("DELETE FROM projects WHERE id=$1", &[&md.id])
+                .await
+        } else {
+            _ = connection
+                .query("DELETE FROM posts WHERE id=$1", &[&md.id])
+                .await
         }
     }
 

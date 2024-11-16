@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write;
+use std::path::Path;
 use std::sync::Mutex;
 
 #[derive(Deserialize)]
@@ -56,6 +57,8 @@ pub async fn upload_post(
                 let mut meta_data = filter_meta(&mut text);
                 if meta_data.id == uuid::Uuid::nil() {
                     meta_data.id = uuid::Uuid::new_v4();
+                } else {
+                    db.delete_post(&meta_data).await;
                 }
 
                 let paths = extract_image_paths(text.as_str());
@@ -93,7 +96,7 @@ pub async fn upload_post(
 
                 tokio::spawn(async move {
                     db.save_post(
-                        meta_data,
+                        &meta_data,
                         text.as_str(),
                         format!("{}.jpg", post_image).as_str(),
                     )
@@ -156,7 +159,9 @@ fn filter_meta(text: &mut String) -> shared::MetaData {
 }
 
 fn extract_image_paths(input: &str) -> Vec<String> {
-    let re = Regex::new(r"!\[@IMAGE\]\((.*)\)").unwrap();
+    let re =
+        Regex::new(r"!\[@IMAGE\]\(((?:[a-zA-Z]:)?(?:\\\\|/)?(?:[\w.-]+(?:\\\\|/))*[\w.-]+\.\w+)\)")
+            .unwrap();
 
     re.captures_iter(input)
         .filter_map(|cap| cap.get(1))
@@ -164,19 +169,20 @@ fn extract_image_paths(input: &str) -> Vec<String> {
         .collect()
 }
 
-fn extract_filename(path: &str) -> String {
-    path.rsplit('/').next().unwrap_or("").to_string()
-}
-
 fn replace_path(text: &mut String, path: &String, id: &String) {
-    let expression = format!(r"!\[@IMAGE\]\({}\)", path);
+    let escaped_path = path.replace("\\", "\\\\");
+    let expression = format!(r"!\[@IMAGE\]\({}\)", escaped_path);
 
     let re = Regex::new(&expression).unwrap();
 
     let result = re
         .replace_all(text, {
             let new_url = format!("http://127.0.0.1:8080/images/{}.jpg", id);
-            format!("![{}]({})", extract_filename(path), new_url)
+            format!(
+                "![{}]({})",
+                Path::new(path).file_name().unwrap().to_string_lossy(),
+                new_url
+            )
         })
         .to_string();
 
