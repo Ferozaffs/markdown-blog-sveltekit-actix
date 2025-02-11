@@ -16,7 +16,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - frontend-data:/app/build/client
+      - frontend-data:/app/build/client/configs
 
   db:
     image: postgres:latest

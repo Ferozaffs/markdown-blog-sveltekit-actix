@@ -59,7 +59,7 @@
     });
 
     async function loadTheme() {
-        const response = await fetch('/theme.json');
+        const response = await fetch('/configs/theme.json');
         const data = await response.json();
 
         document.documentElement.style.setProperty('--background-primary-color', data.backgroundprimary);
