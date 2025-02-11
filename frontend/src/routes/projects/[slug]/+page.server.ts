@@ -9,7 +9,7 @@ export const load: Load = async ({ params }) => {
         if (response.ok) {
             let data = await response.text();	  
             const compiledResponse = await compile(data);
-            return {content: compiledResponse?.code };
+            return {content: compiledResponse?.code, slug: params.slug };
         }
     }
 

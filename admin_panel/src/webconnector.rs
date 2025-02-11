@@ -23,6 +23,12 @@ struct ImageData {
     image: String,
 }
 
+#[derive(Serialize)]
+struct ProjectCategory {
+    title: String,
+    description: String,
+}
+
 pub fn upload_post(
     markdown: String,
     server: &str,
@@ -124,4 +130,29 @@ pub fn get_markdown(server: &str, id: uuid::Uuid) -> String {
         Ok(res) => res.text().unwrap(),
         Err(_) => String::from(""),
     }
+}
+
+pub fn upload_project_category(
+    title: &str,
+    description: &str,
+    server: &str,
+    api_token: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let data = ProjectCategory {
+        title: title.to_string(),
+        description: description.to_string(),
+    };
+
+    let json_data = serde_json::to_string(&data)?;
+
+    let url = format!("http://{}/upload_project_category", server);
+    let res = send_json(url.as_str(), api_token, &json_data);
+    match res {
+        Ok(r) => {
+            println!("Status: {}", r.status());
+        }
+        Err(e) => println!("Upload error: {}", e),
+    }
+
+    Ok(())
 }

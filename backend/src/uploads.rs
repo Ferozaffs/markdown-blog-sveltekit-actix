@@ -30,6 +30,12 @@ struct PostResponse {
     imagerequest: Vec<ImageUploadData>,
 }
 
+#[derive(Deserialize)]
+struct ProjectCategory {
+    title: String,
+    description: String,
+}
+
 lazy_static! {
     static ref FINGERPRINTS: Mutex<Vec<ImageUploadData>> = {
         let fingerprints = Vec::new();
@@ -140,6 +146,27 @@ pub async fn upload_image(
                 }
 
                 return HttpResponse::Ok().json(status);
+            }
+        }
+    }
+
+    HttpResponse::Forbidden().finish()
+}
+
+#[post("/upload_project_category")]
+pub async fn upload_project_category(
+    req: HttpRequest,
+    db: web::Data<Database>,
+    data: web::Json<ProjectCategory>,
+) -> impl Responder {
+    if let Some(auth_header) = req.headers().get(AUTHORIZATION) {
+        if let Ok(auth_str) = auth_header.to_str() {
+            let result = db.is_auth_valid(auth_str).await;
+            if let Ok(true) = result {
+                db.create_project_category(&data.title, &data.description)
+                    .await;
+
+                return HttpResponse::Ok().json("Success".to_string());
             }
         }
     }

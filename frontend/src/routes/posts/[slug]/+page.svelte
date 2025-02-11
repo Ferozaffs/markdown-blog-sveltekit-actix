@@ -2,7 +2,9 @@
     export let data;
   </script>
   
-  <div>{@html data.content}</div>
+  <div class="bg-secondary-color flex justify-center items-center">
+    {@html data.content}
+  </div>
   
   
   

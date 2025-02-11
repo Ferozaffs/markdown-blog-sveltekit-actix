@@ -26,17 +26,15 @@
         <p class="text-xl text-primary-color">{title}</p>
         <p class="py-2 text-secondary-color text-left">{description}</p>
     </button>
-    <table class="w-full">
-        <tr>
-            <td>
-                <p class="text-secondary-color text-xs text-left">{date}</p>
-            </td>
-            <td class="flex items-end justify-end">
-                {#each tags as tag}
-                    <button on:click={() => setTag(tag)} class="px-1 m-1 text-primary-color secondary-color rounded-md text-xs">{tag}</button>
-                {/each}
-            </td>
-        </tr>
-    </table>
+    <div class="w-full flex justify-between items-end">
+        <p class="text-secondary-color text-xs m-1">{date}</p>
+        <div class="flex items-end">
+            {#each tags as tag}
+                <button on:click={() => setTag(tag)} class="px-1 m-1 text-primary-color secondary-color rounded-md text-xs">
+                    {tag}
+                </button>
+            {/each}
+        </div>
+    </div>
 </div>
 

@@ -18,7 +18,7 @@
 </script>
 
 <div class="flex flex-col h-screen overflow-hidden">
-    <div class="w-full primary-color h-fit py-4 text-xs text-primary-color">
+    <div class="w-full bg-primary-color h-fit py-4 text-xs text-primary-color">
     <table class="w-full">
     <tr>
     <td class="w-20">
@@ -41,7 +41,7 @@
     </table>
                  
     </div>       
-    <div class="flex-grow h-full w-full overflow-y-auto primary-color">
+    <div class="flex-grow h-full w-full overflow-y-auto bg-secondary-color">
             <div class="p-20 font-medium text-primary-color prose max-w-screen-lg prose-lg">
                     <slot />
             </div>

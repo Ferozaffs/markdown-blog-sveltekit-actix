@@ -38,6 +38,22 @@ enum FileLoadState {
     LoadImage,
 }
 
+struct ProjectPopup {
+    show_project_popup: bool,
+    title: String,
+    description: String,
+}
+
+impl Default for ProjectPopup {
+    fn default() -> Self {
+        Self {
+            show_project_popup: false,
+            title: "".to_string(),
+            description: "".to_string(),
+        }
+    }
+}
+
 struct AdminPanel {
     markdown: String,
     prev_markdown: String,
@@ -53,6 +69,7 @@ struct AdminPanel {
     selected_upload_category: shared::ProjectCategory,
     server_settings: data::ServerSettings,
     server_content_summary: data::ServerContentSummary,
+    project_popup: ProjectPopup,
 }
 
 impl Default for AdminPanel {
@@ -72,6 +89,7 @@ impl Default for AdminPanel {
             selected_upload_category: shared::ProjectCategory::default(),
             server_settings: data::load_server_settings(),
             server_content_summary: ServerContentSummary::default(),
+            project_popup: ProjectPopup::default(),
         }
     }
 }
@@ -243,23 +261,55 @@ impl eframe::App for AdminPanel {
                             }
 
                             ui.label("Category");
-                            egui::ComboBox::from_id_salt("Category combo")
-                                .selected_text(&self.selected_upload_category.title)
-                                .show_ui(ui, |ui| {
-                                    // Add items to the ComboBox
-                                    for option in &self.server_content_summary.categories {
-                                        let response = ui.selectable_value(
-                                            &mut self.selected_upload_category,
-                                            option.clone(),
-                                            option.title.as_str(),
-                                        );
-                                        if response.changed() {
-                                            self.meta_data.category =
-                                                self.selected_upload_category.id;
-                                            regenerate = true;
+                            ui.horizontal(|ui| {
+                                egui::ComboBox::from_id_salt("Category combo")
+                                    .selected_text(&self.selected_upload_category.title)
+                                    .show_ui(ui, |ui| {
+                                        // Add items to the ComboBox
+                                        for option in &self.server_content_summary.categories {
+                                            let response = ui.selectable_value(
+                                                &mut self.selected_upload_category,
+                                                option.clone(),
+                                                option.title.as_str(),
+                                            );
+                                            if response.changed() {
+                                                self.meta_data.category =
+                                                    self.selected_upload_category.id;
+                                                regenerate = true;
+                                            }
                                         }
-                                    }
-                                });
+                                    });
+                                let response = ui.button("Add");
+                                if response.clicked() {
+                                    self.project_popup.show_project_popup = true;
+                                }
+                            });
+
+                            if self.project_popup.show_project_popup {
+                                egui::Window::new("Add project category")
+                                    .collapsible(false)
+                                    .resizable(false)
+                                    .show(ctx, |ui| {
+                                        ui.label("Title");
+                                        ui.add(egui::TextEdit::singleline(
+                                            &mut self.project_popup.title,
+                                        ));
+                                        ui.label("Description");
+                                        ui.add(egui::TextEdit::singleline(
+                                            &mut self.project_popup.description,
+                                        ));
+
+                                        if ui.button("Add & close").clicked() {
+                                            self.add_project_category();
+                                            self.get_server_content_summary();
+                                            self.project_popup.show_project_popup = false;
+                                        }
+
+                                        if ui.button("Close").clicked() {
+                                            self.project_popup.show_project_popup = false;
+                                        }
+                                    });
+                            }
                         }
 
                         let mut index_removal: Vec<usize> = Vec::new();
@@ -393,5 +443,14 @@ impl AdminPanel {
         self.markdown = webconnector::get_markdown(self.server_settings.address.as_str(), id);
 
         self.load_meta_data()
+    }
+
+    fn add_project_category(&mut self) {
+        let _ = webconnector::upload_project_category(
+            self.project_popup.title.as_str(),
+            self.project_popup.description.as_str(),
+            &self.server_settings.address,
+            &self.server_settings.api_token,
+        );
     }
 }

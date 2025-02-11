@@ -310,6 +310,39 @@ impl Database {
         }
     }
 
+    pub async fn create_project_category(&self, title: &str, description: &str) {
+        let result = self.get_project_categories().await;
+
+        match result {
+            Ok(rows) => {
+                for row in rows {
+                    let value: String = row.get("category");
+
+                    if value.contains(title) {
+                        return;
+                    }
+                }
+            }
+            Err(_) => return,
+        }
+
+        let query = format!(
+            "INSERT INTO project_categories (id, category, description)
+            VALUES ($1, $2, $3)"
+        );
+
+        let id = uuid::Uuid::new_v4();
+
+        let connection = self.get_connection().await;
+        match connection
+            .execute(&query, &[&id, &title, &description])
+            .await
+        {
+            Ok(_) => return,
+            Err(_) => return,
+        }
+    }
+
     pub async fn check_api_keys(&self) -> Result<bool, Error> {
         let connection = self.get_connection().await;
 

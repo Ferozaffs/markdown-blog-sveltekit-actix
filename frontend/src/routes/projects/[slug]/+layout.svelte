@@ -1,11 +1,9 @@
 <script>
         import { goto } from '$app/navigation';
-
         export let data;
 </script>
-
 <div class="flex flex-col h-screen overflow-hidden">
-        <div class="w-full primary-color h-14 text-xl text-primary-color">
+        <div class="w-full bg-primary-color h-14 text-xl text-primary-color">
         <table>
         <tr>
         <td>
@@ -22,8 +20,8 @@
         </tr>
         </table>                 
         </div>       
-        <div class="flex-grow h-full w-full overflow-y-auto primary-color">
-                <div class="p-20 font-medium text-primary-color prose max-w-screen-lg prose-lg">
+        <div class="h-full w-full overflow-y-auto">
+                <div class="font-medium text-primary-color prose prose-lg max-w-none">
                         <slot />
                 </div>
         </div>   

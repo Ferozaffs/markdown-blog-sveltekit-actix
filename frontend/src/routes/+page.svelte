@@ -50,6 +50,7 @@
     }
 
     let title = ''
+    let about = ''
 
     let themeLoaded = false
     onMount(async () => {
@@ -72,6 +73,7 @@
         document.documentElement.style.setProperty('--text-secondary-color', data.textsecondary);
 
         title = data.title;
+        about = data.about;
     }
 
 </script>
@@ -99,7 +101,7 @@
             {/if}
         </td>
         </tr>
-    </table>    
+    </table>  
     </div>
     
     <div class="flex-1 bg-primary-color">
@@ -108,7 +110,7 @@
         {:else if $currentContent === ContentArea.Projects}
             <ProjectOverview/>
         {:else}
-            <About/>
+            <About bind:about={about}/>
         {/if}
     </div>
 </div>
